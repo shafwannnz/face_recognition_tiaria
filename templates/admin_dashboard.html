@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Admin</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f6f9; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        
+        /* Style Tabel */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+
+        /* Style Form */
+        .form-box { background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        input, select { padding: 8px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #218838; }
+        
+        .btn-delete { background: #dc3545; text-decoration: none; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.9em; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .logout { color: red; text-decoration: none; font-weight: bold; }
+        .msg { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+
+        /* Tambahkan class khusus role ini */
+        .role-admin { color: #dc3545; font-weight: bold; }   /* Merah */
+        .role-manajer { color: #007bff; font-weight: bold; } /* Biru */
+        .role-karyawan { color: #28a745; font-weight: bold; } /* Hijau */
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🛠️ Dashboard Admin</h1>
+        <a href="/logout" class="logout">Logout ➔</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="msg {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="form-box">
+        <h3>➕ Tambah User Baru</h3>
+        <form action="/add_user" method="POST">
+            <input type="text" name="name" placeholder="Nama Lengkap" required>
+            <input type="text" name="username" placeholder="Username Login" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <select name="role">
+                <option value="karyawan">Karyawan</option>
+                <option value="manajer">Manajer</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button type="submit">Simpan</button>
+        </form>
+    </div>
+
+    <h3>📋 Daftar Pengguna Sistem</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nama</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user[0] }}</td>
+                <td>{{ user[3] }}</td> <td>{{ user[1] }}</td> <td>
+                    <span class="role--{{ user[4] }}">
+                        {{ user[4] }}
+                    </span>
+                </td>
+                <td>
+                    {% if user[1] != current_user.username %}
+                        <a href="/delete_user/{{ user[0] }}" class="btn-delete" onclick="return confirm('Yakin hapus user ini?')">Hapus</a>
+                    {% else %}
+                        <small>(Akun Anda)</small>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

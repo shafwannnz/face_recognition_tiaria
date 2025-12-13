@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Karyawan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; text-align: center; margin: 0; padding: 0; }
+        
+        /* Navbar simpel */
+        .navbar { background-color: #007bff; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar h2 { margin: 0; font-size: 1.2rem; }
+        .logout-btn { background-color: #dc3545; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; font-size: 0.9rem; border: none; cursor: pointer;}
+        .logout-btn:hover { background-color: #c82333; }
+
+        .container { margin-top: 30px; }
+        .video-box { 
+            border: 5px solid #333; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            max-width: 100%;
+            height: auto;
+        }
+        .info { margin-top: 15px; color: #555; }
+        .badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div style="margin-left: 20px;">
+            Halo, <b>{{ current_user.name }}</b> <span class="badge">Karyawan</span>
+        </div>
+        <div style="margin-right: 20px;">
+            <a href="/logout" class="logout-btn">Keluar (Logout)</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>📸 Silakan Absen</h1>
+        <p class="info">Pastikan wajah Anda terlihat jelas dan pencahayaan cukup.</p>
+        
+        <img src="{{ url_for('video_feed') }}" class="video-box" width="640" height="480">
+        
+        <p><small>Sistem otomatis mencatat kehadiran saat wajah <b>{{ current_user.name }}</b> terdeteksi.</small></p>
+    </div>
+
+</body>
+</html>
