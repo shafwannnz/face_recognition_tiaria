@@ -1,19 +1,24 @@
-from flask import Flask, render_template, Response, request, redirect, url_for, flash
+from flask import Flask, render_template, Response, request, redirect, url_for, flash, send_file, session # <-- Tambah session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask import make_response
-from fpdf import FPDF 
 import cv2
 import face_recognition
 import pickle
 import numpy as np
 import os
-from datetime import datetime
+import pandas as pd
+from datetime import datetime, timedelta # <-- Tambah timedelta
+from io import BytesIO
+from fpdf import FPDF
 from utils.db_manager import create_connection
 from models import User
 
 app = Flask(__name__)
 app.secret_key = "rahasia_super_aman"
+
+# --- UPDATE KEAMANAN: AUTO LOGOUT 5 MENIT ---
+# Kalau user tidak ngapa-ngapain selama 5 menit, sesi hangus.
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
 
 # --- SETUP FLASK LOGIN ---
 login_manager = LoginManager()
@@ -34,14 +39,13 @@ except:
     known_encodings = []
     known_names = []
 
-# --- SETTING KAMERA (SOLUSI ANTI LAG 1) ---
+# --- SETTING KAMERA ---
 camera = cv2.VideoCapture(0)
-# Paksa resolusi kecil biar ringan (640x480 standard webcam)
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 def mark_attendance(name, user_login):
-    """ Mencatat absensi ke DB """
+    """ Mencatat absensi dengan Anti-Spam (Jeda 2 menit) """
     conn = create_connection()
     if conn is not None:
         cursor = conn.cursor()
@@ -49,30 +53,57 @@ def mark_attendance(name, user_login):
         date_str = now.strftime("%Y-%m-%d")
         time_str = now.strftime("%H:%M:%S")
         
+        # 1. Cari ID User
         cursor.execute("SELECT id FROM users WHERE name=?", (name,))
         user_db = cursor.fetchone()
         
         if user_db:
             user_id = user_db[0]
-            # Validasi: Pastikan wajah sama dengan akun yang login
+            
+            # 2. Validasi: Wajah harus sama dengan akun Login
             if user_login.is_authenticated and user_login.name == name:
-                cursor.execute("SELECT * FROM attendance WHERE user_id=? AND date_str=?", (user_id, date_str))
-                if not cursor.fetchone():
+                
+                # 3. CEK TERAKHIR ABSEN (Logic Baru!)
+                # Kita ambil data absen TERAKHIR hari ini
+                cursor.execute("""
+                    SELECT time_str FROM attendance 
+                    WHERE user_id=? AND date_str=? 
+                    ORDER BY id DESC LIMIT 1
+                """, (user_id, date_str))
+                last_attendance = cursor.fetchone()
+                
+                should_record = False
+                
+                if not last_attendance:
+                    # Kalau belum pernah absen hari ini -> REKAM (Face IN)
+                    should_record = True
+                else:
+                    # Kalau sudah pernah absen, cek selisih waktunya
+                    last_time = datetime.strptime(last_attendance[0], "%H:%M:%S")
+                    current_time = datetime.strptime(time_str, "%H:%M:%S")
+                    
+                    # Hitung selisih detik
+                    diff_seconds = (current_time - last_time).total_seconds()
+                    
+                    # Cuma boleh absen lagi kalau sudah lewat 120 detik (2 menit)
+                    if diff_seconds > 120: 
+                        should_record = True
+                        print(f"🔄 Absen Baru (Face Out/Update): {diff_seconds} detik sejak terakhir.")
+                    else:
+                        print(f"⏳ Spam Detected! Tunggu {120 - diff_seconds} detik lagi.")
+
+                # 4. EKSEKUSI REKAM KE DATABASE
+                if should_record:
                     cursor.execute("INSERT INTO attendance (user_id, date_str, time_str) VALUES (?, ?, ?)", 
                                 (user_id, date_str, time_str))
                     conn.commit()
-                    print(f"✅ {name} Absen jam {time_str}")
-            else:
-                pass
+                    print(f"✅ {name} Berhasil Absen pada {time_str}")
+                    
         conn.close()
 
-# --- FUNGSI GENERATOR (SOLUSI FIX ERROR + ANTI LAG 2) ---
 def generate_frames(active_user):
-    """ 
-    Menerima parameter 'active_user' supaya tidak error NoneType.
-    """
     frame_count = 0
-    process_every_n_frames = 15 # Skip frame (Proses 1 frame, lewati 4)
+    process_every_n_frames = 15 
 
     last_face_locations = []
     last_face_names = []
@@ -83,8 +114,6 @@ def generate_frames(active_user):
             break
         else:
             frame_count += 1
-
-            # --- LOGIKA SKIP FRAME (BIAR RINGAN) ---
             if frame_count % process_every_n_frames == 0:
                 small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
                 rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
@@ -102,74 +131,58 @@ def generate_frames(active_user):
                         best_match_index = np.argmin(face_distances)
                         if matches[best_match_index]:
                             name = known_names[best_match_index]
-                            
-                            # Cek active_user ada isinya gak?
                             if active_user and active_user.is_authenticated:
                                 mark_attendance(name, active_user)
 
                     last_face_names.append(name)
 
-            # --- GAMBAR KOTAK ---
             for (top, right, bottom, left), name in zip(last_face_locations, last_face_names):
                 top *= 4; right *= 4; bottom *= 4; left *= 4
-                
-                color = (0, 255, 0) # Default Hijau
-                
-                # Cek active_user dulu sebelum nanya is_authenticated
+                color = (0, 255, 0)
                 if active_user and active_user.is_authenticated:
                     if name != active_user.name:
-                        color = (0, 0, 255) # Merah (Salah Akun)
+                        color = (0, 0, 255)
                 
                 cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
                 cv2.rectangle(frame, (left, bottom - 35), (right, bottom), color, cv2.FILLED)
                 cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 1)
 
-            # Turunkan kualitas JPG ke 60%
             ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
             frame_bytes = buffer.tobytes()
             yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
-# --- ROUTES (JALUR WEB) ---
+# --- ROUTES ---
+
+# Tambahkan ini biar tiap request sesi diperbarui waktunya
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=5) # Logout otomatis setelah 5 menit idle
 
 @app.route('/')
 def root():
-    """ 
-    Route Pintu Utama (Gatekeeper).
-    Logic: Cek session. Kalau belum login -> Login. Kalau udah -> Dashboard.
-    """
     if current_user.is_authenticated:
-        # Kalau user memaksakan buka halaman utama padahal udah login,
-        # Arahkan kembali ke dashboard sesuai role mereka.
-        if current_user.role == 'admin':
-            return redirect(url_for('admin_dashboard'))
-        elif current_user.role == 'manajer':
-            return redirect(url_for('manajer_dashboard'))
-        else:
-            return redirect(url_for('karyawan_absensi'))
+        if current_user.role == 'admin': return redirect(url_for('admin_dashboard'))
+        elif current_user.role == 'manajer': return redirect(url_for('manajer_dashboard'))
+        else: return redirect(url_for('karyawan_absensi'))
     else:
-        # Kalau belum login, paksa ke halaman login
         return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Proteksi: Kalau sudah login, tendang balik ke root
-    if current_user.is_authenticated:
-        return redirect(url_for('root'))
+    if current_user.is_authenticated: return redirect(url_for('root'))
 
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
         user_data = User.get_by_username(username)
         
         if user_data and check_password_hash(user_data[2], password):
             user = User(id=user_data[0], username=user_data[1], name=user_data[3], role=user_data[4])
             login_user(user)
-            # Redirect ke root biar dipilah sama Gatekeeper
             return redirect(url_for('root')) 
         else:
             flash('Login Gagal. Cek username/password.')
-            
     return render_template('login.html')
 
 @app.route('/logout')
@@ -179,7 +192,7 @@ def logout():
     flash('Anda berhasil logout.', 'success')
     return redirect(url_for('login'))
 
-# --- HALAMAN KARYAWAN (Dulu Index, Sekarang /absensi) ---
+# --- HALAMAN KARYAWAN ---
 @app.route('/absensi')
 @login_required
 def karyawan_absensi():
@@ -188,7 +201,6 @@ def karyawan_absensi():
 @app.route('/video_feed')
 @login_required
 def video_feed():
-    # Fix Error NoneType: Kirim current_user ke fungsi generator
     return Response(generate_frames(current_user), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # --- HALAMAN ADMIN ---
@@ -206,7 +218,7 @@ def admin_dashboard():
 @app.route('/add_user', methods=['POST'])
 @login_required
 def add_user():
-    if current_user.role != 'admin': return redirect(url_for('root')) # Redirect ke root kalau bukan admin
+    if current_user.role != 'admin': return redirect(url_for('root'))
     name = request.form['name']
     username = request.form['username']
     password = request.form['password']
@@ -239,11 +251,71 @@ def delete_user(user_id):
     return redirect(url_for('admin_dashboard'))
 
 # --- HALAMAN MANAJER ---
+
 @app.route('/manajer')
 @login_required
 def manajer_dashboard():
     if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
-    return f"<h1>Halaman Manajer</h1><p>Halo {current_user.name}.</p><a href='/logout'>Logout</a>"
+    conn = create_connection()
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    query = f"""
+    SELECT u.name, MIN(a.time_str) as face_in, MAX(a.time_str) as face_out, COUNT(a.id) as total_scan
+    FROM attendance a JOIN users u ON a.user_id = u.id
+    WHERE a.date_str = '{today_str}' GROUP BY u.name
+    """
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    attendance_data = df.to_dict(orient='records')
+    return render_template('manajer_dashboard.html', user=current_user, data=attendance_data, today=today_str)
+
+@app.route('/download_report/<type>')
+@login_required
+def download_report(type):
+    if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
+    conn = create_connection()
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    query = f"""
+    SELECT u.name as Nama, a.date_str as Tanggal, a.time_str as Jam_Scan, u.role as Jabatan
+    FROM attendance a JOIN users u ON a.user_id = u.id
+    WHERE a.date_str = '{today_str}' ORDER BY a.time_str ASC
+    """
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+
+    if type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Absensi Harian')
+        output.seek(0)
+        return send_file(output, download_name=f'Laporan_Absensi_{today_str}.xlsx', as_attachment=True)
+
+    elif type == 'pdf':
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.set_font("Arial", style="B", size=16)
+        pdf.cell(200, 10, txt=f"Laporan Absensi Tiaria Jewelry", ln=True, align='C')
+        pdf.set_font("Arial", size=10)
+        pdf.cell(200, 10, txt=f"Tanggal: {today_str}", ln=True, align='C')
+        pdf.ln(10)
+        pdf.set_font("Arial", style="B", size=10)
+        pdf.cell(50, 10, "Nama Karyawan", 1)
+        pdf.cell(30, 10, "Tanggal", 1)
+        pdf.cell(30, 10, "Jam Scan", 1)
+        pdf.cell(40, 10, "Jabatan", 1)
+        pdf.ln()
+        pdf.set_font("Arial", size=10)
+        for i, row in df.iterrows():
+            pdf.cell(50, 10, str(row['Nama']), 1)
+            pdf.cell(30, 10, str(row['Tanggal']), 1)
+            pdf.cell(30, 10, str(row['Jam_Scan']), 1)
+            pdf.cell(40, 10, str(row['Jabatan']), 1)
+            pdf.ln()
+        pdf_output = BytesIO()
+        pdf_content = pdf.output(dest='S').encode('latin-1')
+        pdf_output.write(pdf_content)
+        pdf_output.seek(0)
+        return send_file(pdf_output, download_name=f'Laporan_Absensi_{today_str}.pdf', as_attachment=True, mimetype='application/pdf')
 
 if __name__ == '__main__':
     app.run(debug=True)

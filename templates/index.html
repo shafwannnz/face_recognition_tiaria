@@ -3,47 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Karyawan</title>
+    <title>Absensi Karyawan - Tiaria Jewelry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; text-align: center; margin: 0; padding: 0; }
-        
-        /* Navbar simpel */
-        .navbar { background-color: #007bff; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .navbar h2 { margin: 0; font-size: 1.2rem; }
-        .logout-btn { background-color: #dc3545; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; font-size: 0.9rem; border: none; cursor: pointer;}
-        .logout-btn:hover { background-color: #c82333; }
-
-        .container { margin-top: 30px; }
-        .video-box { 
-            border: 5px solid #333; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            max-width: 100%;
-            height: auto;
-        }
-        .info { margin-top: 15px; color: #555; }
-        .badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; }
+        body { font-family: 'Poppins', sans-serif; }
+        /* Animasi kedip untuk indikator Live */
+        .blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 min-h-screen flex flex-col">
 
-    <div class="navbar">
-        <div style="margin-left: 20px;">
-            Halo, <b>{{ current_user.name }}</b> <span class="badge">Karyawan</span>
+    <nav class="bg-white shadow-sm border-b border-slate-200">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                    <i class="fa-solid fa-gem"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 leading-tight">Tiaria Jewelry</h1>
+                    <p class="text-xs text-slate-500">Employee Area</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-semibold text-slate-700">{{ user.name }}</p>
+                    <p class="text-xs text-slate-400 capitalize">{{ user.role }}</p>
+                </div>
+                <a href="/logout" class="text-slate-400 hover:text-red-600 transition">
+                    <i class="fa-solid fa-right-from-bracket text-xl"></i>
+                </a>
+            </div>
         </div>
-        <div style="margin-right: 20px;">
-            <a href="/logout" class="logout-btn">Keluar (Logout)</a>
-        </div>
-    </div>
+    </nav>
 
-    <div class="container">
-        <h1>📸 Silakan Absen</h1>
-        <p class="info">Pastikan wajah Anda terlihat jelas dan pencahayaan cukup.</p>
+    <main class="flex-grow flex flex-col items-center justify-center p-6">
         
-        <img src="{{ url_for('video_feed') }}" class="video-box" width="640" height="480">
-        
-        <p><small>Sistem otomatis mencatat kehadiran saat wajah <b>{{ current_user.name }}</b> terdeteksi.</small></p>
-    </div>
+        <div class="max-w-2xl w-full space-y-6">
+            
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold text-slate-800">Halo, {{ user.name }}! 👋</h2>
+                <p class="text-slate-500">Silakan pilih jenis absensi Anda hari ini.</p>
+            </div>
+
+            <div id="menu-pilihan" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="bukaKamera('Masuk')" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-300 text-left relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                        <i class="fa-solid fa-sun text-6xl text-emerald-500"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-door-open"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800">Absen Masuk</h3>
+                    <p class="text-sm text-slate-500">Mulai shift kerja Anda.</p>
+                </button>
+
+                <button onclick="bukaKamera('Pulang')" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-orange-500 hover:shadow-md transition-all duration-300 text-left relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                        <i class="fa-solid fa-moon text-6xl text-orange-500"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-person-walking-arrow-right"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800">Absen Pulang</h3>
+                    <p class="text-sm text-slate-500">Akhiri shift kerja Anda.</p>
+                </button>
+            </div>
+
+            <div id="area-kamera" class="hidden bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-red-500 blink"></span>
+                        <h3 class="font-bold text-slate-700" id="judul-kamera">Scanning...</h3>
+                    </div>
+                    <button onclick="tutupKamera()" class="text-sm text-slate-500 hover:text-red-600 font-medium">
+                        <i class="fa-solid fa-xmark"></i> Tutup Kamera
+                    </button>
+                </div>
+                
+                <div class="relative bg-black aspect-video flex items-center justify-center">
+                    <img id="video-feed" src="" alt="Camera Feed" class="w-full h-full object-cover">
+                    
+                    <div class="absolute bottom-4 left-0 right-0 text-center">
+                        <span class="bg-black/50 text-white px-4 py-2 rounded-full text-xs backdrop-blur-sm border border-white/20">
+                            Pastikan wajah terlihat jelas di dalam kotak.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-4 text-center bg-blue-50">
+                    <p class="text-xs text-blue-600">
+                        <i class="fa-solid fa-circle-info mr-1"></i> 
+                        Sistem otomatis mencatat waktu saat wajah <b>{{ user.name }}</b> terdeteksi.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function bukaKamera(tipe) {
+            // 1. Sembunyikan menu pilihan
+            document.getElementById('menu-pilihan').classList.add('hidden');
+            
+            // 2. Munculkan area kamera
+            document.getElementById('area-kamera').classList.remove('hidden');
+            
+            // 3. Update judul
+            document.getElementById('judul-kamera').innerText = "Mode Absen " + tipe;
+            
+            // 4. NYALAKAN STREAMING (Set src image)
+            // Kita tambahkan parameter random biar browser ga nge-cache gambar lama
+            document.getElementById('video-feed').src = "{{ url_for('video_feed') }}?t=" + new Date().getTime();
+        }
+
+        function tutupKamera() {
+            // 1. Matikan Streaming (Set src jadi kosong) biar kamera laptop mati lampunya
+            document.getElementById('video-feed').src = "";
+            
+            // 2. Sembunyikan area kamera
+            document.getElementById('area-kamera').classList.add('hidden');
+            
+            // 3. Munculkan menu pilihan lagi
+            document.getElementById('menu-pilihan').classList.remove('hidden');
+            
+            // 4. Reload halaman (Opsional, biar data baru mungkin ke-load kalau kita tampilin status)
+            // location.reload(); 
+        }
+    </script>
 
 </body>
 </html>
