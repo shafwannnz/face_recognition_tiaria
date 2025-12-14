@@ -16,9 +16,9 @@ from models import User
 app = Flask(__name__)
 app.secret_key = "rahasia_super_aman"
 
-# --- UPDATE KEAMANAN: AUTO LOGOUT 5 MENIT ---
-# Kalau user tidak ngapa-ngapain selama 5 menit, sesi hangus.
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+# --- UPDATE KEAMANAN: AUTO LOGOUT 1 MENIT ---
+# Kalau user tidak ngapa-ngapain selama 1 menit, sesi hangus.
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)
 
 # --- SETUP FLASK LOGIN ---
 login_manager = LoginManager()
@@ -45,7 +45,12 @@ camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 def mark_attendance(name, user_login):
-    """ Mencatat absensi dengan Anti-Spam (Jeda 2 menit) """
+    """ Mencatat absensi & Nulis ke file log.txt biar kebaca """
+    
+    # Buka file log.txt (Mode Append)
+    with open("log.txt", "a") as f:
+        f.write(f"\n[{datetime.now()}] SCAN DETECTED: {name}\n")
+    
     conn = create_connection()
     if conn is not None:
         cursor = conn.cursor()
@@ -53,57 +58,45 @@ def mark_attendance(name, user_login):
         date_str = now.strftime("%Y-%m-%d")
         time_str = now.strftime("%H:%M:%S")
         
-        # 1. Cari ID User
         cursor.execute("SELECT id FROM users WHERE name=?", (name,))
         user_db = cursor.fetchone()
         
         if user_db:
             user_id = user_db[0]
-            
-            # 2. Validasi: Wajah harus sama dengan akun Login
+            # Validasi Nama
             if user_login.is_authenticated and user_login.name == name:
                 
-                # 3. CEK TERAKHIR ABSEN (Logic Baru!)
-                # Kita ambil data absen TERAKHIR hari ini
-                cursor.execute("""
-                    SELECT time_str FROM attendance 
-                    WHERE user_id=? AND date_str=? 
-                    ORDER BY id DESC LIMIT 1
-                """, (user_id, date_str))
+                # Cek Spam (2 menit)
+                cursor.execute("SELECT time_str FROM attendance WHERE user_id=? AND date_str=? ORDER BY id DESC LIMIT 1", (user_id, date_str))
                 last_attendance = cursor.fetchone()
                 
                 should_record = False
-                
                 if not last_attendance:
-                    # Kalau belum pernah absen hari ini -> REKAM (Face IN)
                     should_record = True
+                    with open("log.txt", "a") as f: f.write(f"   -> Status: Absen PERTAMA hari ini. REKAM!\n")
                 else:
-                    # Kalau sudah pernah absen, cek selisih waktunya
                     last_time = datetime.strptime(last_attendance[0], "%H:%M:%S")
                     current_time = datetime.strptime(time_str, "%H:%M:%S")
+                    diff = (current_time - last_time).total_seconds()
                     
-                    # Hitung selisih detik
-                    diff_seconds = (current_time - last_time).total_seconds()
-                    
-                    # Cuma boleh absen lagi kalau sudah lewat 120 detik (2 menit)
-                    if diff_seconds > 120: 
+                    if diff > 120:
                         should_record = True
-                        print(f"🔄 Absen Baru (Face Out/Update): {diff_seconds} detik sejak terakhir.")
+                        with open("log.txt", "a") as f: f.write(f"   -> Status: Absen PULANG (Face Out). Selisih {diff}s\n")
                     else:
-                        print(f"⏳ Spam Detected! Tunggu {120 - diff_seconds} detik lagi.")
+                        with open("log.txt", "a") as f: f.write(f"   -> SPAM: Ditolak, baru {diff}s lalu.\n")
 
-                # 4. EKSEKUSI REKAM KE DATABASE
                 if should_record:
-                    cursor.execute("INSERT INTO attendance (user_id, date_str, time_str) VALUES (?, ?, ?)", 
-                                (user_id, date_str, time_str))
+                    cursor.execute("INSERT INTO attendance (user_id, date_str, time_str) VALUES (?, ?, ?)", (user_id, date_str, time_str))
                     conn.commit()
-                    print(f"✅ {name} Berhasil Absen pada {time_str}")
-                    
+                    print(f"✅ DATA MASUK: {name}") # Tetap print ke terminal
+            else:
+                with open("log.txt", "a") as f: f.write(f"   -> ERROR: Wajah ({name}) != Akun ({user_login.name})\n")
+        
         conn.close()
 
 def generate_frames(active_user):
     frame_count = 0
-    process_every_n_frames = 15 
+    process_every_n_frames = 60
 
     last_face_locations = []
     last_face_names = []
