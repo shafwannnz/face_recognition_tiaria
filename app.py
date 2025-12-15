@@ -41,8 +41,8 @@ except:
 
 # --- SETTING KAMERA ---
 camera = cv2.VideoCapture(0)
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1080) # Ubah ke 1:1 ya ges ya
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
 def mark_attendance(name, user_login):
     """ Mencatat absensi & Nulis ke file log.txt biar kebaca """
@@ -95,11 +95,14 @@ def mark_attendance(name, user_login):
         conn.close()
 
 def generate_frames(active_user):
-    frame_count = 0
+    frame_count = 60
     process_every_n_frames = 60
-
     last_face_locations = []
     last_face_names = []
+    
+    # Variabel buat nampilin status di layar
+    debug_status = "Menunggu Wajah..." 
+    debug_color = (255, 255, 255) # Putih
 
     while True:
         success, frame = camera.read()
@@ -110,11 +113,10 @@ def generate_frames(active_user):
             if frame_count % process_every_n_frames == 0:
                 small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
                 rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-                
                 last_face_locations = face_recognition.face_locations(rgb_small_frame)
                 face_encodings = face_recognition.face_encodings(rgb_small_frame, last_face_locations)
-                
                 last_face_names = []
+                
                 for face_encoding in face_encodings:
                     matches = face_recognition.compare_faces(known_encodings, face_encoding)
                     name = "Unknown"
@@ -124,21 +126,34 @@ def generate_frames(active_user):
                         best_match_index = np.argmin(face_distances)
                         if matches[best_match_index]:
                             name = known_names[best_match_index]
+                            
+                            # --- DEBUG LOGIC DI SINI ---
                             if active_user and active_user.is_authenticated:
-                                mark_attendance(name, active_user)
+                                if active_user.name == name:
+                                    # COCOK! Panggil fungsi simpan
+                                    mark_attendance(name, active_user)
+                                    debug_status = f"SUKSES: Data {name} Masuk!"
+                                    debug_color = (0, 255, 0) # Hijau
+                                else:
+                                    # GAGAL: Bedah Nama
+                                    debug_status = f"GAGAL: Login '{active_user.name}' != Wajah '{name}'"
+                                    debug_color = (0, 0, 255) # Merah
+                            else:
+                                debug_status = "ERROR: User dianggap belum login!"
+                                debug_color = (0, 255, 255) # Kuning
+                            # ---------------------------
 
                     last_face_names.append(name)
 
+            # GAMBAR KOTAK & TEXT DEBUG
             for (top, right, bottom, left), name in zip(last_face_locations, last_face_names):
                 top *= 4; right *= 4; bottom *= 4; left *= 4
-                color = (0, 255, 0)
-                if active_user and active_user.is_authenticated:
-                    if name != active_user.name:
-                        color = (0, 0, 255)
-                
-                cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
-                cv2.rectangle(frame, (left, bottom - 35), (right, bottom), color, cv2.FILLED)
+                cv2.rectangle(frame, (left, top), (right, bottom), debug_color, 2)
+                cv2.rectangle(frame, (left, bottom - 35), (right, bottom), debug_color, cv2.FILLED)
                 cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 1)
+
+            # TULIS STATUS ERROR DI BAGIAN BAWAH LAYAR
+            cv2.putText(frame, debug_status, (10, 470), cv2.FONT_HERSHEY_SIMPLEX, 0.7, debug_color, 2)
 
             ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
             frame_bytes = buffer.tobytes()
@@ -194,7 +209,9 @@ def karyawan_absensi():
 @app.route('/video_feed')
 @login_required
 def video_feed():
-    return Response(generate_frames(current_user), mimetype='multipart/x-mixed-replace; boundary=frame')
+    # Fix ambil objek user Asli biar ga ilang di tengah jalan
+    real_user = current_user._get_current_object()
+    return Response(generate_frames(real_user), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # --- HALAMAN ADMIN ---
 @app.route('/admin')
