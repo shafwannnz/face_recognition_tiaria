@@ -28,3 +28,9 @@
 
 [2025-12-15 23:54:19.159674] SCAN DETECTED: Zaky
    -> SPAM: Ditolak, baru 3.0s lalu.
+
+[2025-12-16 06:37:54.271532] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-16 06:37:57.021616] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 3.0s lalu.

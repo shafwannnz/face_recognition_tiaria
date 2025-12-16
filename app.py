@@ -262,70 +262,168 @@ def delete_user(user_id):
 
 # --- HALAMAN MANAJER ---
 
-@app.route('/manajer')
+# @app.route('/manajer')
+# @login_required
+# def manajer_dashboard():
+#     if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
+#     conn = create_connection()
+#     today_str = datetime.now().strftime("%Y-%m-%d")
+#     query = f"""
+#     SELECT u.name, MIN(a.time_str) as face_in, MAX(a.time_str) as face_out, COUNT(a.id) as total_scan
+#     FROM attendance a JOIN users u ON a.user_id = u.id
+#     WHERE a.date_str = '{today_str}' GROUP BY u.name
+#     """
+#     df = pd.read_sql_query(query, conn)
+#     conn.close()
+#     attendance_data = df.to_dict(orient='records')
+#     return render_template('manajer_dashboard.html', user=current_user, data=attendance_data, today=today_str)
+
+# @app.route('/download_report/<type>')
+# @login_required
+# def download_report(type):
+#     if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
+#     conn = create_connection()
+#     today_str = datetime.now().strftime("%Y-%m-%d")
+#     query = f"""
+#     SELECT u.name as Nama, a.date_str as Tanggal, a.time_str as Jam_Scan, u.role as Jabatan
+#     FROM attendance a JOIN users u ON a.user_id = u.id
+#     WHERE a.date_str = '{today_str}' ORDER BY a.time_str ASC
+#     """
+#     df = pd.read_sql_query(query, conn)
+#     conn.close()
+
+#     if type == 'excel':
+#         output = BytesIO()
+#         with pd.ExcelWriter(output, engine='openpyxl') as writer:
+#             df.to_excel(writer, index=False, sheet_name='Absensi Harian')
+#         output.seek(0)
+#         return send_file(output, download_name=f'Laporan_Absensi_{today_str}.xlsx', as_attachment=True)
+
+#     elif type == 'pdf':
+#         pdf = FPDF()
+#         pdf.add_page()
+#         pdf.set_font("Arial", size=12)
+#         pdf.set_font("Arial", style="B", size=16)
+#         pdf.cell(200, 10, txt=f"Laporan Absensi Tiaria Jewelry", ln=True, align='C')
+#         pdf.set_font("Arial", size=10)
+#         pdf.cell(200, 10, txt=f"Tanggal: {today_str}", ln=True, align='C')
+#         pdf.ln(10)
+#         pdf.set_font("Arial", style="B", size=10)
+#         pdf.cell(50, 10, "Nama Karyawan", 1)
+#         pdf.cell(30, 10, "Tanggal", 1)
+#         pdf.cell(30, 10, "Jam Scan", 1)
+#         pdf.cell(40, 10, "Jabatan", 1)
+#         pdf.ln()
+#         pdf.set_font("Arial", size=10)
+#         for i, row in df.iterrows():
+#             pdf.cell(50, 10, str(row['Nama']), 1)
+#             pdf.cell(30, 10, str(row['Tanggal']), 1)
+#             pdf.cell(30, 10, str(row['Jam_Scan']), 1)
+#             pdf.cell(40, 10, str(row['Jabatan']), 1)
+#             pdf.ln()
+#         pdf_output = BytesIO()
+#         pdf_content = pdf.output(dest='S').encode('latin-1')
+#         pdf_output.write(pdf_content)
+#         pdf_output.seek(0)
+#         return send_file(pdf_output, download_name=f'Laporan_Absensi_{today_str}.pdf', as_attachment=True, mimetype='application/pdf')
+# --- HALAMAN MANAJER (DENGAN FILTER BULAN) ---
+@app.route('/manajer', methods=['GET', 'POST'])
 @login_required
 def manajer_dashboard():
     if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
+    
     conn = create_connection()
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    
+    # 1. Cek apakah user milih bulan tertentu? Kalau enggak, pakai bulan ini.
+    if request.method == 'POST':
+        # Format dari HTML input type="month" itu "YYYY-MM" (contoh: 2025-12)
+        filter_month = request.form['bulan'] 
+    else:
+        filter_month = datetime.now().strftime("%Y-%m") # Default: Bulan Ini
+    
+    # 2. Query Rekap Bulanan (Hitung berapa kali hadir)
+    # Kita pakai LIKE '2025-12%' biar semua tanggal di bulan itu kena.
     query = f"""
-    SELECT u.name, MIN(a.time_str) as face_in, MAX(a.time_str) as face_out, COUNT(a.id) as total_scan
-    FROM attendance a JOIN users u ON a.user_id = u.id
-    WHERE a.date_str = '{today_str}' GROUP BY u.name
+    SELECT 
+        u.name, 
+        COUNT(DISTINCT a.date_str) as total_hadir,
+        MIN(a.time_str) as rata_rata_jam_masuk 
+    FROM attendance a
+    JOIN users u ON a.user_id = u.id
+    WHERE a.date_str LIKE '{filter_month}%'
+    GROUP BY u.name
     """
+    
     df = pd.read_sql_query(query, conn)
     conn.close()
-    attendance_data = df.to_dict(orient='records')
-    return render_template('manajer_dashboard.html', user=current_user, data=attendance_data, today=today_str)
+    
+    rekap_data = df.to_dict(orient='records')
+    
+    return render_template('manajer_dashboard.html', 
+                           user=current_user, 
+                           data=rekap_data, 
+                           selected_month=filter_month) # Kirim bulan terpilih ke HTML
 
-@app.route('/download_report/<type>')
+@app.route('/download_report/<type>/<month>')
 @login_required
-def download_report(type):
+def download_report(type, month):
     if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
+    
     conn = create_connection()
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    
+    # Query Data Lengkap/Detail untuk Export
     query = f"""
-    SELECT u.name as Nama, a.date_str as Tanggal, a.time_str as Jam_Scan, u.role as Jabatan
-    FROM attendance a JOIN users u ON a.user_id = u.id
-    WHERE a.date_str = '{today_str}' ORDER BY a.time_str ASC
+    SELECT 
+        u.name as Nama, 
+        a.date_str as Tanggal,
+        a.time_str as Jam_Scan,
+        u.role as Jabatan
+    FROM attendance a
+    JOIN users u ON a.user_id = u.id
+    WHERE a.date_str LIKE '{month}%'
+    ORDER BY a.date_str DESC, a.time_str ASC
     """
     df = pd.read_sql_query(query, conn)
     conn.close()
+
+    filename = f"Laporan_Absensi_{month}"
 
     if type == 'excel':
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Absensi Harian')
+            df.to_excel(writer, index=False, sheet_name='Rekap Bulanan')
         output.seek(0)
-        return send_file(output, download_name=f'Laporan_Absensi_{today_str}.xlsx', as_attachment=True)
+        return send_file(output, download_name=f'{filename}.xlsx', as_attachment=True)
 
     elif type == 'pdf':
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", size=12)
         pdf.set_font("Arial", style="B", size=16)
-        pdf.cell(200, 10, txt=f"Laporan Absensi Tiaria Jewelry", ln=True, align='C')
-        pdf.set_font("Arial", size=10)
-        pdf.cell(200, 10, txt=f"Tanggal: {today_str}", ln=True, align='C')
+        pdf.cell(200, 10, txt=f"Laporan Bulanan Tiaria Jewelry", ln=True, align='C')
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt=f"Periode: {month}", ln=True, align='C')
         pdf.ln(10)
+
+        # Header Tabel
         pdf.set_font("Arial", style="B", size=10)
-        pdf.cell(50, 10, "Nama Karyawan", 1)
-        pdf.cell(30, 10, "Tanggal", 1)
-        pdf.cell(30, 10, "Jam Scan", 1)
+        pdf.cell(50, 10, "Nama", 1)
+        pdf.cell(40, 10, "Tanggal", 1)
+        pdf.cell(40, 10, "Jam", 1)
         pdf.cell(40, 10, "Jabatan", 1)
         pdf.ln()
+
+        # Isi Tabel
         pdf.set_font("Arial", size=10)
         for i, row in df.iterrows():
             pdf.cell(50, 10, str(row['Nama']), 1)
-            pdf.cell(30, 10, str(row['Tanggal']), 1)
-            pdf.cell(30, 10, str(row['Jam_Scan']), 1)
+            pdf.cell(40, 10, str(row['Tanggal']), 1)
+            pdf.cell(40, 10, str(row['Jam_Scan']), 1)
             pdf.cell(40, 10, str(row['Jabatan']), 1)
             pdf.ln()
-        pdf_output = BytesIO()
-        pdf_content = pdf.output(dest='S').encode('latin-1')
-        pdf_output.write(pdf_content)
-        pdf_output.seek(0)
-        return send_file(pdf_output, download_name=f'Laporan_Absensi_{today_str}.pdf', as_attachment=True, mimetype='application/pdf')
 
+        pdf_output = BytesIO()
+        pdf_output.write(pdf.output(dest='S').encode('latin-1'))
+        pdf_output.seek(0)
+        return send_file(pdf_output, download_name=f'{filename}.pdf', as_attachment=True, mimetype='application/pdf')
 if __name__ == '__main__':
     app.run(debug=True)
