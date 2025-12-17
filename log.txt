@@ -34,3 +34,9 @@
 
 [2025-12-16 06:37:57.021616] SCAN DETECTED: Zaky
    -> SPAM: Ditolak, baru 3.0s lalu.
+
+[2025-12-16 22:30:03.714537] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 57129.0s
+
+[2025-12-16 22:30:06.583015] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 3.0s lalu.

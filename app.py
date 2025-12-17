@@ -334,16 +334,14 @@ def manajer_dashboard():
     
     conn = create_connection()
     
-    # 1. Cek apakah user milih bulan tertentu? Kalau enggak, pakai bulan ini.
+    # 1. Cek Filter Bulan
     if request.method == 'POST':
-        # Format dari HTML input type="month" itu "YYYY-MM" (contoh: 2025-12)
         filter_month = request.form['bulan'] 
     else:
-        filter_month = datetime.now().strftime("%Y-%m") # Default: Bulan Ini
+        filter_month = datetime.now().strftime("%Y-%m")
     
-    # 2. Query Rekap Bulanan (Hitung berapa kali hadir)
-    # Kita pakai LIKE '2025-12%' biar semua tanggal di bulan itu kena.
-    query = f"""
+    # --- QUERY 1: REKAP BULANAN (Tabel Atas) ---
+    query_rekap = f"""
     SELECT 
         u.name, 
         COUNT(DISTINCT a.date_str) as total_hadir,
@@ -353,38 +351,33 @@ def manajer_dashboard():
     WHERE a.date_str LIKE '{filter_month}%'
     GROUP BY u.name
     """
+    df_rekap = pd.read_sql_query(query_rekap, conn)
+    rekap_data = df_rekap.to_dict(orient='records')
     
-    df = pd.read_sql_query(query, conn)
+    # --- QUERY 2: DETAIL HARIAN (Tabel Bawah - Face IN/OUT) ---
+    # Ini query sakti yang balikin fitur lama lu
+    query_daily = f"""
+    SELECT 
+        u.name, 
+        a.date_str,
+        MIN(a.time_str) as face_in,
+        MAX(a.time_str) as face_out
+    FROM attendance a
+    JOIN users u ON a.user_id = u.id
+    WHERE a.date_str LIKE '{filter_month}%'
+    GROUP BY u.name, a.date_str
+    ORDER BY a.date_str DESC, a.time_str ASC
+    """
+    df_daily = pd.read_sql_query(query_daily, conn)
+    daily_data = df_daily.to_dict(orient='records')
+    
     conn.close()
-    
-    rekap_data = df.to_dict(orient='records')
     
     return render_template('manajer_dashboard.html', 
                            user=current_user, 
-                           data=rekap_data, 
-                           selected_month=filter_month) # Kirim bulan terpilih ke HTML
-
-@app.route('/download_report/<type>/<month>')
-@login_required
-def download_report(type, month):
-    if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
-    
-    conn = create_connection()
-    
-    # Query Data Lengkap/Detail untuk Export
-    query = f"""
-    SELECT 
-        u.name as Nama, 
-        a.date_str as Tanggal,
-        a.time_str as Jam_Scan,
-        u.role as Jabatan
-    FROM attendance a
-    JOIN users u ON a.user_id = u.id
-    WHERE a.date_str LIKE '{month}%'
-    ORDER BY a.date_str DESC, a.time_str ASC
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
+                           rekap_data=rekap_data,   # Data Tabel Atas
+                           daily_data=daily_data,   # Data Tabel Bawah (Baru)
+                           selected_month=filter_month)
 
     filename = f"Laporan_Absensi_{month}"
 
