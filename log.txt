@@ -40,3 +40,84 @@
 
 [2025-12-16 22:30:06.583015] SCAN DETECTED: Zaky
    -> SPAM: Ditolak, baru 3.0s lalu.
+
+[2025-12-17 22:22:10.287539] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-17 22:30:50.392002] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 520.0s
+
+[2025-12-17 22:30:52.010128] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 2.0s lalu.
+
+[2025-12-17 22:30:53.548002] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 3.0s lalu.
+
+[2025-12-17 22:30:55.165309] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 5.0s lalu.
+
+[2025-12-17 22:30:56.706455] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 6.0s lalu.
+
+[2025-12-17 22:34:24.402710] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 214.0s
+
+[2025-12-17 22:34:27.003802] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 3.0s lalu.
+
+[2025-12-17 22:34:32.276586] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 8.0s lalu.
+
+[2025-12-17 22:34:34.800298] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 10.0s lalu.
+
+[2025-12-17 22:34:36.437419] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 12.0s lalu.
+
+[2025-12-17 22:34:38.116887] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 14.0s lalu.
+
+[2025-12-17 22:34:42.475264] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 18.0s lalu.
+
+[2025-12-17 22:34:44.139542] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 20.0s lalu.
+
+[2025-12-17 22:34:45.805817] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 21.0s lalu.
+
+[2025-12-17 23:50:05.761443] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 4541.0s
+
+[2025-12-18 19:17:21.434091] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-18 19:17:23.217209] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 2.0s lalu.
+
+[2025-12-18 19:17:24.998275] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 4.0s lalu.
+
+[2025-12-18 19:17:26.714516] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 5.0s lalu.
+
+[2025-12-18 19:17:28.539347] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 7.0s lalu.
+
+[2025-12-18 19:17:30.345098] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 9.0s lalu.
+
+[2025-12-18 19:17:32.160379] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 11.0s lalu.
+
+[2025-12-18 19:17:35.772289] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 14.0s lalu.
+
+[2025-12-18 19:17:37.533439] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 16.0s lalu.
+
+[2025-12-18 19:17:39.343359] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 18.0s lalu.
+
+[2025-12-18 19:17:41.152818] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 20.0s lalu.

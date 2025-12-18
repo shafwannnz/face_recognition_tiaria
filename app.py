@@ -39,10 +39,10 @@ except:
     known_encodings = []
     known_names = []
 
-# --- SETTING KAMERA ---
-camera = cv2.VideoCapture(0)
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1080) # Ubah ke 1:1 ya ges ya
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+# # --- SETTING KAMERA ---
+# camera = cv2.VideoCapture(0)
+# camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1080) # Ubah ke 1:1 ya ges ya
+# camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
 def mark_attendance(name, user_login):
     """ Mencatat absensi & Nulis ke file log.txt biar kebaca """
@@ -95,69 +95,85 @@ def mark_attendance(name, user_login):
         conn.close()
 
 def generate_frames(active_user):
-    frame_count = 60
-    process_every_n_frames = 60
+    print("📸 Mencoba menyalakan kamera...")
+    
+    # TAMBAHAN: cv2.CAP_DSHOW (Biar di Windows sat-set nyalanya)
+    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    
+    # Setting resolusi biar gambar gak pecah
+    camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
+    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    
+    if not camera.isOpened():
+        print("❌ GAGAL: Kamera tidak terdeteksi atau dikunci aplikasi lain!")
+        return
+
+    frame_count = 0
+    process_every_n_frames = 15
     last_face_locations = []
     last_face_names = []
     
-    # Variabel buat nampilin status di layar
     debug_status = "Menunggu Wajah..." 
-    debug_color = (255, 255, 255) # Putih
+    debug_color = (255, 255, 255) 
 
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-        else:
-            frame_count += 1
-            if frame_count % process_every_n_frames == 0:
-                small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-                rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-                last_face_locations = face_recognition.face_locations(rgb_small_frame)
-                face_encodings = face_recognition.face_encodings(rgb_small_frame, last_face_locations)
-                last_face_names = []
-                
-                for face_encoding in face_encodings:
-                    matches = face_recognition.compare_faces(known_encodings, face_encoding)
-                    name = "Unknown"
-                    face_distances = face_recognition.face_distance(known_encodings, face_encoding)
+    try:
+        while True:
+            success, frame = camera.read()
+            if not success:
+                print("⚠️ Warning: Gagal membaca frame kamera.")
+                break
+            else:
+                frame_count += 1
+                if frame_count % process_every_n_frames == 0:
+                    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+                    rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
                     
-                    if len(face_distances) > 0:
-                        best_match_index = np.argmin(face_distances)
-                        if matches[best_match_index]:
-                            name = known_names[best_match_index]
-                            
-                            # --- DEBUG LOGIC DI SINI ---
-                            if active_user and active_user.is_authenticated:
-                                if active_user.name == name:
-                                    # COCOK! Panggil fungsi simpan
-                                    mark_attendance(name, active_user)
-                                    debug_status = f"SUKSES: Data {name} Masuk!"
-                                    debug_color = (0, 255, 0) # Hijau
+                    last_face_locations = face_recognition.face_locations(rgb_small_frame)
+                    face_encodings = face_recognition.face_encodings(rgb_small_frame, last_face_locations)
+                    last_face_names = []
+                    
+                    for face_encoding in face_encodings:
+                        matches = face_recognition.compare_faces(known_encodings, face_encoding)
+                        name = "Unknown"
+                        face_distances = face_recognition.face_distance(known_encodings, face_encoding)
+                        
+                        if len(face_distances) > 0:
+                            best_match_index = np.argmin(face_distances)
+                            if matches[best_match_index]:
+                                name = known_names[best_match_index]
+                                
+                                if active_user and active_user.is_authenticated:
+                                    if active_user.name == name:
+                                        mark_attendance(name, active_user)
+                                        debug_status = f"SUKSES: Data {name} Masuk!"
+                                        debug_color = (0, 255, 0)
+                                    else:
+                                        debug_status = f"GAGAL: Login '{active_user.name}' != Wajah '{name}'"
+                                        debug_color = (0, 0, 255)
                                 else:
-                                    # GAGAL: Bedah Nama
-                                    debug_status = f"GAGAL: Login '{active_user.name}' != Wajah '{name}'"
-                                    debug_color = (0, 0, 255) # Merah
-                            else:
-                                debug_status = "ERROR: User dianggap belum login!"
-                                debug_color = (0, 255, 255) # Kuning
-                            # ---------------------------
+                                    debug_status = "ERROR: User dianggap belum login!"
+                                    debug_color = (0, 255, 255)
 
-                    last_face_names.append(name)
+                        last_face_names.append(name)
 
-            # GAMBAR KOTAK & TEXT DEBUG
-            for (top, right, bottom, left), name in zip(last_face_locations, last_face_names):
-                top *= 4; right *= 4; bottom *= 4; left *= 4
-                cv2.rectangle(frame, (left, top), (right, bottom), debug_color, 2)
-                cv2.rectangle(frame, (left, bottom - 35), (right, bottom), debug_color, cv2.FILLED)
-                cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 1)
+                for (top, right, bottom, left), name in zip(last_face_locations, last_face_names):
+                    top *= 4; right *= 4; bottom *= 4; left *= 4
+                    cv2.rectangle(frame, (left, top), (right, bottom), debug_color, 2)
+                    cv2.rectangle(frame, (left, bottom - 35), (right, bottom), debug_color, cv2.FILLED)
+                    cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 1)
 
-            # TULIS STATUS ERROR DI BAGIAN BAWAH LAYAR
-            cv2.putText(frame, debug_status, (10, 470), cv2.FONT_HERSHEY_SIMPLEX, 0.7, debug_color, 2)
+                cv2.putText(frame, debug_status, (10, 470), cv2.FONT_HERSHEY_SIMPLEX, 0.7, debug_color, 2)
 
-            ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
-            frame_bytes = buffer.tobytes()
-            yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
+                frame_bytes = buffer.tobytes()
+                yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+    except Exception as e:
+        print(f"Error Camera Loop: {e}")
+        
+    finally:
+        camera.release()
+        print("📸 Kamera dimatikan (Resource Released).")
 
 # --- ROUTES ---
 
@@ -278,55 +294,69 @@ def delete_user(user_id):
 #     attendance_data = df.to_dict(orient='records')
 #     return render_template('manajer_dashboard.html', user=current_user, data=attendance_data, today=today_str)
 
-# @app.route('/download_report/<type>')
-# @login_required
-# def download_report(type):
-#     if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
-#     conn = create_connection()
-#     today_str = datetime.now().strftime("%Y-%m-%d")
-#     query = f"""
-#     SELECT u.name as Nama, a.date_str as Tanggal, a.time_str as Jam_Scan, u.role as Jabatan
-#     FROM attendance a JOIN users u ON a.user_id = u.id
-#     WHERE a.date_str = '{today_str}' ORDER BY a.time_str ASC
-#     """
-#     df = pd.read_sql_query(query, conn)
-#     conn.close()
+@app.route('/download_report/<type>/<month>')
+@login_required
+def download_report(type, month):
+    if current_user.role != 'manajer': return "⛔ AKSES DITOLAK"
+    
+    conn = create_connection()
+    
+    # Query Data Lengkap (Filter Bulan & Role Karyawan)
+    # Kita tambahkan WHERE u.role = 'karyawan' biar Admin/Manajer gak ikut ke-download
+    query = f"""
+    SELECT 
+        u.name as Nama, 
+        a.date_str as Tanggal,
+        a.time_str as Jam_Scan,
+        u.role as Jabatan
+    FROM attendance a
+    JOIN users u ON a.user_id = u.id
+    WHERE u.role = 'karyawan' AND a.date_str LIKE '{month}%'
+    ORDER BY a.date_str DESC, a.time_str ASC
+    """
+    df = pd.read_sql_query(query, conn)
+    conn.close()
 
-#     if type == 'excel':
-#         output = BytesIO()
-#         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-#             df.to_excel(writer, index=False, sheet_name='Absensi Harian')
-#         output.seek(0)
-#         return send_file(output, download_name=f'Laporan_Absensi_{today_str}.xlsx', as_attachment=True)
+    filename = f"Laporan_Absensi_{month}"
 
-#     elif type == 'pdf':
-#         pdf = FPDF()
-#         pdf.add_page()
-#         pdf.set_font("Arial", size=12)
-#         pdf.set_font("Arial", style="B", size=16)
-#         pdf.cell(200, 10, txt=f"Laporan Absensi Tiaria Jewelry", ln=True, align='C')
-#         pdf.set_font("Arial", size=10)
-#         pdf.cell(200, 10, txt=f"Tanggal: {today_str}", ln=True, align='C')
-#         pdf.ln(10)
-#         pdf.set_font("Arial", style="B", size=10)
-#         pdf.cell(50, 10, "Nama Karyawan", 1)
-#         pdf.cell(30, 10, "Tanggal", 1)
-#         pdf.cell(30, 10, "Jam Scan", 1)
-#         pdf.cell(40, 10, "Jabatan", 1)
-#         pdf.ln()
-#         pdf.set_font("Arial", size=10)
-#         for i, row in df.iterrows():
-#             pdf.cell(50, 10, str(row['Nama']), 1)
-#             pdf.cell(30, 10, str(row['Tanggal']), 1)
-#             pdf.cell(30, 10, str(row['Jam_Scan']), 1)
-#             pdf.cell(40, 10, str(row['Jabatan']), 1)
-#             pdf.ln()
-#         pdf_output = BytesIO()
-#         pdf_content = pdf.output(dest='S').encode('latin-1')
-#         pdf_output.write(pdf_content)
-#         pdf_output.seek(0)
-#         return send_file(pdf_output, download_name=f'Laporan_Absensi_{today_str}.pdf', as_attachment=True, mimetype='application/pdf')
-# --- HALAMAN MANAJER (DENGAN FILTER BULAN) ---
+    if type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Rekap Bulanan')
+        output.seek(0)
+        return send_file(output, download_name=f'{filename}.xlsx', as_attachment=True)
+
+    elif type == 'pdf':
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", style="B", size=16)
+        pdf.cell(200, 10, txt=f"Laporan Bulanan Tiaria Jewelry", ln=True, align='C')
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt=f"Periode: {month}", ln=True, align='C')
+        pdf.ln(10)
+
+        # Header Tabel
+        pdf.set_font("Arial", style="B", size=10)
+        pdf.cell(50, 10, "Nama", 1)
+        pdf.cell(40, 10, "Tanggal", 1)
+        pdf.cell(40, 10, "Jam", 1)
+        pdf.cell(40, 10, "Jabatan", 1)
+        pdf.ln()
+
+        # Isi Tabel
+        pdf.set_font("Arial", size=10)
+        for i, row in df.iterrows():
+            pdf.cell(50, 10, str(row['Nama']), 1)
+            pdf.cell(40, 10, str(row['Tanggal']), 1)
+            pdf.cell(40, 10, str(row['Jam_Scan']), 1)
+            pdf.cell(40, 10, str(row['Jabatan']), 1)
+            pdf.ln()
+
+        pdf_output = BytesIO()
+        pdf_output.write(pdf.output(dest='S').encode('latin-1'))
+        pdf_output.seek(0)
+        return send_file(pdf_output, download_name=f'{filename}.pdf', as_attachment=True, mimetype='application/pdf')
+
 @app.route('/manajer', methods=['GET', 'POST'])
 @login_required
 def manajer_dashboard():
@@ -340,22 +370,28 @@ def manajer_dashboard():
     else:
         filter_month = datetime.now().strftime("%Y-%m")
     
-    # --- QUERY 1: REKAP BULANAN (Tabel Atas) ---
+    # --- QUERY 1: REKAP BULANAN (KHUSUS KARYAWAN) ---
     query_rekap = f"""
     SELECT 
         u.name, 
-        COUNT(DISTINCT a.date_str) as total_hadir,
-        MIN(a.time_str) as rata_rata_jam_masuk 
-    FROM attendance a
-    JOIN users u ON a.user_id = u.id
-    WHERE a.date_str LIKE '{filter_month}%'
+        COALESCE(SUM(CASE WHEN t.in_time != t.out_time THEN 1 ELSE 0 END), 0) as total_hadir,
+        MIN(t.in_time) as rata_rata_jam_masuk
+    FROM users u
+    LEFT JOIN (
+        SELECT user_id, date_str, MIN(time_str) as in_time, MAX(time_str) as out_time
+        FROM attendance
+        WHERE date_str LIKE '{filter_month}%'
+        GROUP BY user_id, date_str
+    ) t ON u.id = t.user_id
+    WHERE u.role = 'karyawan'  -- <--- INI FILTERNYA BRO!
     GROUP BY u.name
     """
+    
     df_rekap = pd.read_sql_query(query_rekap, conn)
+    df_rekap['total_hadir'] = df_rekap['total_hadir'].fillna(0).astype(int)
     rekap_data = df_rekap.to_dict(orient='records')
     
-    # --- QUERY 2: DETAIL HARIAN (Tabel Bawah - Face IN/OUT) ---
-    # Ini query sakti yang balikin fitur lama lu
+    # --- QUERY 2: DETAIL HARIAN (KHUSUS KARYAWAN) ---
     query_daily = f"""
     SELECT 
         u.name, 
@@ -364,7 +400,7 @@ def manajer_dashboard():
         MAX(a.time_str) as face_out
     FROM attendance a
     JOIN users u ON a.user_id = u.id
-    WHERE a.date_str LIKE '{filter_month}%'
+    WHERE u.role = 'karyawan' AND a.date_str LIKE '{filter_month}%' -- <--- FILTER DI SINI JUGA
     GROUP BY u.name, a.date_str
     ORDER BY a.date_str DESC, a.time_str ASC
     """
@@ -375,8 +411,8 @@ def manajer_dashboard():
     
     return render_template('manajer_dashboard.html', 
                            user=current_user, 
-                           rekap_data=rekap_data,   # Data Tabel Atas
-                           daily_data=daily_data,   # Data Tabel Bawah (Baru)
+                           rekap_data=rekap_data,   
+                           daily_data=daily_data,   
                            selected_month=filter_month)
 
     filename = f"Laporan_Absensi_{month}"

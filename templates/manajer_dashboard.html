@@ -6,6 +6,7 @@
     <title>Dashboard Manajer - Tiaria Jewelry</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -135,7 +136,9 @@
                             
                             <td class="p-4 text-center">
                                 {% if row['face_in'] == row['face_out'] %}
-                                    <span class="text-slate-400 italic text-xs">Belum Pulang</span>
+                                    <span class="text-slate-400 italic text-xs animate-pulse font-medium text-red-500">
+                                        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Belum Absen Pulang
+                                    </span>
                                 {% else %}
                                     <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-md font-mono text-xs font-bold">
                                         {{ row['face_out'] }}
@@ -144,7 +147,15 @@
                             </td>
 
                             <td class="p-4 text-center">
-                                <span class="text-emerald-600 font-bold text-xs"><i class="fa-solid fa-check-circle"></i> Hadir</span>
+                                {% if row['face_in'] == row['face_out'] %}
+                                    <span class="text-orange-500 font-bold text-xs bg-orange-50 px-2 py-1 rounded border border-orange-100">
+                                        <i class="fa-solid fa-hourglass-half"></i> Menunggu
+                                    </span>
+                                {% else %}
+                                    <span class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
+                                        <i class="fa-solid fa-check-double"></i> Valid (1 Hari)
+                                    </span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
