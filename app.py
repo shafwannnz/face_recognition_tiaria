@@ -264,6 +264,36 @@ def add_user():
         conn.close()
     return redirect(url_for('admin_dashboard'))
 
+# --- FITUR BARU: UPDATE USER ---
+@app.route('/update_user', methods=['POST'])
+@login_required
+def update_user():
+    if current_user.role != 'admin': return "⛔ AKSES DITOLAK"
+    
+    user_id = request.form['user_id']
+    name = request.form['name']
+    username = request.form['username']
+    role = request.form['role']
+    password = request.form['password'] 
+    
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # Logika: Kalau password diisi, update passwordnya juga. Kalau kosong, skip.
+        if password: 
+            hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
+            cursor.execute("UPDATE users SET name=?, username=?, role=?, password=? WHERE id=?", (name, username, role, hashed_pw, user_id))
+        else: 
+            cursor.execute("UPDATE users SET name=?, username=?, role=? WHERE id=?", (name, username, role, user_id))
+        
+        conn.commit()
+        flash(f'Data {name} berhasil diperbarui!', 'success')
+    except Exception as e:
+        flash(f'Gagal update: {e}', 'error')
+    finally:
+        conn.close()
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/delete_user/<int:user_id>')
 @login_required
 def delete_user(user_id):

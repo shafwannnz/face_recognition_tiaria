@@ -4,19 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin - Tiaria Jewelry</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-    <style>
-        body { font-family: 'Poppins', sans-serif; }
-        /* Custom Font buat SweetAlert biar senada */
+    <style> 
+        body { font-family: 'Poppins', sans-serif; } 
         .swal2-popup { font-family: 'Poppins', sans-serif !important; }
+        /* Animasi Modal */
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-x: hidden; overflow-y: hidden !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -29,8 +26,8 @@
                         <i class="fa-solid fa-gem"></i>
                     </div>
                     <div>
-                        <h1 class="font-bold text-xl text-slate-800 tracking-tight">Tiaria Jewelry</h1>
-                        <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Admin Panel</p>
+                        <h1 class="font-bold text-xl text-slate-800">Tiaria Jewelry</h1>
+                        <p class="text-[10px] text-slate-500 font-medium uppercase">Admin Panel</p>
                     </div>
                 </div>
                 
@@ -49,86 +46,54 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 mb-10">
-
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden sticky top-24">
                     <div class="bg-slate-800 p-5 text-white">
-                        <h2 class="font-semibold text-lg flex items-center gap-2">
-                            <i class="fa-solid fa-user-plus"></i> Tambah User
-                        </h2>
+                        <h2 class="font-semibold text-lg flex items-center gap-2"><i class="fa-solid fa-user-plus"></i> Tambah User</h2>
                         <p class="text-slate-400 text-xs mt-1">Daftarkan karyawan atau manajer baru.</p>
                     </div>
                     
                     <div class="p-6">
                         <form action="/add_user" method="POST" class="space-y-4">
-                            
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nama Lengkap</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-id-card"></i></span>
-                                    <input type="text" name="name" placeholder="Contoh: Budi Santoso" required 
-                                        class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all">
-                                </div>
+                                <input type="text" name="name" placeholder="Contoh: Budi Santoso" required 
+                                    class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm">
                             </div>
-
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Username Login</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-user"></i></span>
-                                    <input type="text" name="username" placeholder="Contoh: budi123" required 
-                                        class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all">
-                                </div>
+                                <input type="text" name="username" placeholder="Contoh: budi123" required 
+                                    class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm">
                             </div>
-
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Password</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-key"></i></span>
-                                    <input type="password" name="password" placeholder="Minimal 6 karakter" required 
-                                        class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all">
-                                </div>
+                                <input type="password" name="password" placeholder="Minimal 6 karakter" required 
+                                    class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm">
                             </div>
-
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Jabatan / Role</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-briefcase"></i></span>
-                                    <select name="role" class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all bg-white appearance-none">
-                                        <option value="karyawan">Karyawan (Staff)</option>
-                                        <option value="manajer">Manajer (Pengawas)</option>
-                                        <option value="admin">Administrator</option>
-                                    </select>
-                                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400"><i class="fa-solid fa-chevron-down text-xs"></i></span>
-                                </div>
+                                <select name="role" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm bg-white">
+                                    <option value="karyawan">Karyawan (Staff)</option>
+                                    <option value="manajer">Manajer (Pengawas)</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
                             </div>
-
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mt-4">
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-4">
                                 <i class="fa-solid fa-floppy-disk"></i> Simpan Data
                             </button>
-
                         </form>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-2">
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg"><i class="fa-solid fa-users"></i></div>
-                        <div>
-                            <p class="text-xs text-slate-400 font-semibold uppercase">Total User</p>
-                            <h3 class="text-xl font-bold text-slate-800">{{ users|length }}</h3>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                         <h3 class="font-bold text-slate-700 text-lg">Daftar Pengguna</h3>
                         <span class="text-xs font-medium px-2 py-1 bg-white border rounded text-slate-500 shadow-sm">
-                            <i class="fa-solid fa-database text-blue-500 mr-1"></i> Database Active
+                            <i class="fa-solid fa-users text-blue-500 mr-1"></i> Total: {{ users|length }}
                         </span>
                     </div>
                     
@@ -136,7 +101,6 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                                    <th class="p-4 border-b border-slate-200">ID</th>
                                     <th class="p-4 border-b border-slate-200">Nama Lengkap</th>
                                     <th class="p-4 border-b border-slate-200">Username</th>
                                     <th class="p-4 border-b border-slate-200">Role</th>
@@ -146,14 +110,12 @@
                             <tbody class="text-sm text-slate-700 divide-y divide-slate-100">
                                 {% for user in users %}
                                 <tr class="hover:bg-blue-50/30 transition-colors duration-200">
-                                    <td class="p-4 font-mono text-slate-400">#{{ user[0] }}</td>
-                                    
                                     <td class="p-4 font-semibold text-slate-800">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
-                                                {% if user[4] == 'admin' %} bg-red-100 text-red-600
-                                                {% elif user[4] == 'manajer' %} bg-blue-100 text-blue-600
-                                                {% else %} bg-emerald-100 text-emerald-600 {% endif %}">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white
+                                                {% if user[4] == 'admin' %} bg-red-500
+                                                {% elif user[4] == 'manajer' %} bg-blue-500
+                                                {% else %} bg-emerald-500 {% endif %}">
                                                 {{ user[3][:1] }}
                                             </div>
                                             {{ user[3] }}
@@ -164,18 +126,22 @@
                                     
                                     <td class="p-4">
                                         <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                            {% if user[4] == 'admin' %} bg-red-100 text-red-600 border border-red-200
-                                            {% elif user[4] == 'manajer' %} bg-blue-100 text-blue-600 border border-blue-200
-                                            {% else %} bg-emerald-100 text-emerald-600 border border-emerald-200 {% endif %}">
+                                            {% if user[4] == 'admin' %} bg-red-100 text-red-600
+                                            {% elif user[4] == 'manajer' %} bg-blue-100 text-blue-600
+                                            {% else %} bg-emerald-100 text-emerald-600 {% endif %}">
                                             {{ user[4]|upper }}
                                         </span>
                                     </td>
                                     
-                                    <td class="p-4 text-right">
-                                        {% if user[1] != 'admin' %}
+                                    <td class="p-4 text-right flex justify-end gap-2">
+                                        {% if user[1] != 'admin' %} <button onclick="openEditModal('{{ user[0] }}', '{{ user[3] }}', '{{ user[1] }}', '{{ user[4] }}')"
+                                                class="px-3 py-1.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded text-xs font-medium transition shadow-sm border border-yellow-200">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                                            </button>
+
                                             <button onclick="konfirmasiHapus(event, '{{ user[0] }}', '{{ user[3] }}')"
-                                               class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 rounded text-xs font-medium transition-all shadow-sm group">
-                                                <i class="fa-solid fa-trash-can group-hover:scale-110 transition-transform"></i> Hapus
+                                               class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded text-xs font-medium transition shadow-sm border border-red-200">
+                                                <i class="fa-solid fa-trash-can"></i> Hapus
                                             </button>
                                         {% else %}
                                             <span class="text-xs text-slate-400 italic bg-slate-100 px-2 py-1 rounded">Protected</span>
@@ -188,96 +154,114 @@
                     </div>
                 </div>
             </div>
-            
         </div>
     </main>
 
-    <footer class="text-center py-6 text-slate-400 text-xs border-t border-slate-200 mt-auto">
-        &copy; 2025 Tiaria Jewelry IT Division. All rights reserved.
-    </footer>
+    <div id="editModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeEditModal()"></div>
 
-    <div id="flash-data" 
-         data-messages='{{ get_flashed_messages(with_categories=true) | tojson }}' 
-         style="display: none;">
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <form action="/update_user" method="POST">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                            <i class="fa-solid fa-user-pen text-yellow-500 mr-2"></i> Edit Data User
+                        </h3>
+                        
+                        <input type="hidden" name="user_id" id="edit_user_id">
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
+                                <input type="text" name="name" id="edit_name" required class="w-full p-2 border rounded mt-1 focus:ring-2 focus:ring-yellow-400 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Username</label>
+                                <input type="text" name="username" id="edit_username" required class="w-full p-2 border rounded mt-1 focus:ring-2 focus:ring-yellow-400 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Role</label>
+                                <select name="role" id="edit_role" class="w-full p-2 border rounded mt-1 bg-white">
+                                    <option value="karyawan">Karyawan</option>
+                                    <option value="manajer">Manajer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Password Baru <span class="text-gray-400 font-normal">(Kosongkan jika tidak diganti)</span></label>
+                                <input type="password" name="password" placeholder="Isi hanya jika ingin ganti password" class="w-full p-2 border rounded mt-1 focus:ring-2 focus:ring-yellow-400 outline-none bg-slate-50">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                            Simpan Perubahan
+                        </button>
+                        <button type="button" onclick="closeEditModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
+    <div id="flash-data" data-messages='{{ get_flashed_messages(with_categories=true) | tojson }}' style="display: none;"></div>
+    
     <script>
-        // 1. CONFIG TOAST
+        // 1. Toast Alert
         const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true,
+            didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
         })
 
-        // 2. AMBIL DATA DARI DIV TERSEMBUNYI
-        // Kita ambil string-nya, terus kita ubah jadi JSON object
+        // 2. Tampilkan Flash Message
         var flashElement = document.getElementById('flash-data');
         var rawData = flashElement.getAttribute('data-messages');
-        
         try {
-            var flashMessages = JSON.parse(rawData); // Ubah teks jadi Array
-
-            // 3. LOOPING PESAN
+            var flashMessages = JSON.parse(rawData);
             if (Array.isArray(flashMessages) && flashMessages.length > 0) {
                 flashMessages.forEach(function(item) {
-                    var category = item[0];
-                    var message = item[1];
-                    
-                    var iconType = 'info';
-                    if(category === 'error') { iconType = 'error'; }
-                    else if(category === 'success') { iconType = 'success'; }
-
-                    Toast.fire({
-                        icon: iconType,
-                        title: message
-                    })
+                    var type = item[0] === 'error' ? 'error' : 'success';
+                    Toast.fire({ icon: type, title: item[1] });
                 });
             }
-        } catch (e) {
-            console.log("Tidak ada pesan flash.");
-        }
+        } catch (e) {}
 
-        // 4. FUNGSI KONFIRMASI HAPUS
+        // 3. Logic Konfirmasi Hapus
         function konfirmasiHapus(event, userId, userName) {
             event.preventDefault();
             Swal.fire({
-                title: 'Hapus ' + userName + '?',
-                text: "Data yang dihapus tidak bisa dikembalikan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = "/delete_user/" + userId;
-                }
-            })
+                title: 'Hapus ' + userName + '?', text: "Data tidak bisa dikembalikan!", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Hapus!', cancelButtonText: 'Batal'
+            }).then((result) => { if (result.isConfirmed) window.location.href = "/delete_user/" + userId; })
         }
 
-        // 5. FUNGSI LOGOUT
+        // 4. Logic Logout
         function konfirmasiLogout(event) {
             event.preventDefault();
             Swal.fire({
-                title: 'Yakin mau Logout?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#2563eb',
-                cancelButtonColor: '#64748b',
+                title: 'Yakin mau Logout?', icon: 'question', showCancelButton: true,
+                confirmButtonColor: '#2563eb', cancelButtonColor: '#64748b',
                 confirmButtonText: 'Ya, Keluar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = "/logout";
-                }
-            })
+            }).then((result) => { if (result.isConfirmed) window.location.href = "/logout"; })
+        }
+
+        // 5. LOGIC MODAL EDIT (BARU)
+        function openEditModal(id, name, username, role) {
+            document.getElementById('edit_user_id').value = id;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_username').value = username;
+            document.getElementById('edit_role').value = role;
+            
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
         }
     </script>
 </body>
