@@ -88,7 +88,10 @@
                 </div>
                 
                 <div class="relative bg-black aspect-video flex items-center justify-center">
-                    <img id="video-feed" src="" alt="Camera Feed" class="w-full h-full object-cover">
+                    <!-- Ganti IMG dari server dengan VIDEO dari client -->
+                    <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+                    <canvas id="canvas-capture" class="hidden"></canvas>
+                    
                     <div class="absolute bottom-4 left-0 right-0 text-center">
                         <span class="bg-black/50 text-white px-4 py-2 rounded-full text-xs backdrop-blur-sm border border-white/20">
                             Pastikan wajah terlihat jelas di dalam kotak.
@@ -109,16 +112,94 @@
     <div id="flash-data" data-messages='{{ get_flashed_messages(with_categories=true) | tojson }}' style="display: none;"></div>
 
     <script>
-        // --- 1. LOGIC KAMERA ---
+        // --- 1. LOGIC KAMERA CLIENT-SIDE (HP) ---
+        let videoStream = null;
+        let scanInterval = null;
+        const videoEl = document.getElementById('camera-stream');
+        const canvasEl = document.getElementById('canvas-capture');
+        const ctx = canvasEl.getContext('2d');
+
         function bukaKamera(tipe) {
             document.getElementById('menu-pilihan').classList.add('hidden');
             document.getElementById('area-kamera').classList.remove('hidden');
             document.getElementById('judul-kamera').innerText = "Mode Absen " + tipe;
-            document.getElementById('video-feed').src = "{{ url_for('video_feed') }}?t=" + new Date().getTime();
+            
+            // Akses Kamera HP/Browser
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+                .then(function(stream) {
+                    videoStream = stream;
+                    videoEl.srcObject = stream;
+                    videoEl.play();
+                    
+                    // Mulai kirim gambar ke server setiap 1 detik
+                    scanInterval = setInterval(kirimFrameKeServer, 1000); 
+                })
+                .catch(function(err) {
+                    console.error("Gagal akses kamera: ", err);
+                    Swal.fire('Error', 'Gagal mengakses kamera. Pastikan izin diberikan.', 'error');
+                });
+            }
+        }
+
+        function kirimFrameKeServer() {
+            if (!videoStream) return;
+
+            // 1. Ambil gambar dari video element ke canvas
+            canvasEl.width = videoEl.videoWidth;
+            canvasEl.height = videoEl.videoHeight;
+            ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+            // 2. Convert ke Base64
+            let dataURL = canvasEl.toDataURL('image/jpeg', 0.7); // Quality 0.7 biar ringan
+
+            // 3. Kirim ke Flask via Fetch API
+            fetch('/process_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.match === true) {
+                    // Jika wajah cocok
+                    clearInterval(scanInterval); // Stop scanning
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        tutupKamera();
+                        window.location.reload();
+                    });
+                } else if (data.status === 'warning' && data.match === true) {
+                    // Jika wajah cocok TAPI ditolak sistem (misal: belum jam pulang)
+                    clearInterval(scanInterval);
+                    Swal.fire({
+                        title: 'Perhatian!',
+                        text: data.message,
+                        icon: 'warning',
+                        confirmButtonText: 'Oke, Mengerti'
+                    }).then(() => {
+                        tutupKamera(); // Tutup kamera biar user gak bingung
+                    });
+                }
+            })
+            .catch(err => console.error("Error sending frame:", err));
         }
 
         function tutupKamera() {
-            document.getElementById('video-feed').src = "";
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+            videoEl.srcObject = null;
             document.getElementById('area-kamera').classList.add('hidden');
             document.getElementById('menu-pilihan').classList.remove('hidden');
         }

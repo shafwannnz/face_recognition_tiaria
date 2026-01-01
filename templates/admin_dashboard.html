@@ -134,12 +134,21 @@
                                     </td>
                                     
                                     <td class="p-4 text-right flex justify-end gap-2">
-                                        {% if user[1] != 'admin' %} <button onclick="openEditModal('{{ user[0] }}', '{{ user[3] }}', '{{ user[1] }}', '{{ user[4] }}')"
+                                        {% if user[1] != 'admin' %} 
+                                            <button 
+                                                data-id="{{ user[0] }}" 
+                                                data-name="{{ user[3] }}" 
+                                                data-username="{{ user[1] }}" 
+                                                data-role="{{ user[4] }}"
+                                                onclick="openEditModal(this)"
                                                 class="px-3 py-1.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded text-xs font-medium transition shadow-sm border border-yellow-200">
                                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                                             </button>
 
-                                            <button onclick="konfirmasiHapus(event, '{{ user[0] }}', '{{ user[3] }}')"
+                                            <button 
+                                                data-id="{{ user[0] }}" 
+                                                data-name="{{ user[3] }}"
+                                                onclick="konfirmasiHapus(event, this)"
                                                class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded text-xs font-medium transition shadow-sm border border-red-200">
                                                 <i class="fa-solid fa-trash-can"></i> Hapus
                                             </button>
@@ -157,7 +166,7 @@
         </div>
     </main>
 
-    <div id="editModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="editModal" class="fixed inset-0 z-[100] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeEditModal()"></div>
 
@@ -231,8 +240,10 @@
         } catch (e) {}
 
         // 3. Logic Konfirmasi Hapus
-        function konfirmasiHapus(event, userId, userName) {
+        function konfirmasiHapus(event, button) {
             event.preventDefault();
+            const userId = button.getAttribute('data-id');
+            const userName = button.getAttribute('data-name');
             Swal.fire({
                 title: 'Hapus ' + userName + '?', text: "Data tidak bisa dikembalikan!", icon: 'warning',
                 showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#64748b',
@@ -250,18 +261,20 @@
             }).then((result) => { if (result.isConfirmed) window.location.href = "/logout"; })
         }
 
-        // 5. LOGIC MODAL EDIT (BARU)
-        function openEditModal(id, name, username, role) {
-            document.getElementById('edit_user_id').value = id;
-            document.getElementById('edit_name').value = name;
-            document.getElementById('edit_username').value = username;
-            document.getElementById('edit_role').value = role;
+        // 5. LOGIC MODAL EDIT (Diperbaiki dengan data-attribute)
+        function openEditModal(btn) {
+            document.getElementById('edit_user_id').value = btn.getAttribute('data-id');
+            document.getElementById('edit_name').value = btn.getAttribute('data-name');
+            document.getElementById('edit_username').value = btn.getAttribute('data-username');
+            document.getElementById('edit_role').value = btn.getAttribute('data-role');
             
             document.getElementById('editModal').classList.remove('hidden');
+            document.body.classList.add('modal-active'); // Kunci scroll body
         }
 
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
+            document.body.classList.remove('modal-active'); // Buka scroll body
         }
     </script>
 </body>

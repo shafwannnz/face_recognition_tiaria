@@ -4,215 +4,208 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Manajer - Tiaria Jewelry</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style> 
         body { font-family: 'Poppins', sans-serif; } 
         .swal2-popup { font-family: 'Poppins', sans-serif !important; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-slate-50 min-h-screen">
 
-    <nav class="bg-white shadow-sm border-b border-slate-200 fixed w-full top-0 z-50">
+    <!-- NAVBAR -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-indigo-200 shadow-md">
                         <i class="fa-solid fa-chart-line"></i>
                     </div>
-                    <div>
-                        <h1 class="font-bold text-xl text-slate-800">Tiaria Jewelry</h1>
-                        <p class="text-[10px] text-slate-500 font-medium uppercase">Manager Dashboard</p>
-                    </div>
+                    <span class="font-bold text-xl text-slate-800 tracking-tight">Tiaria Manager</span>
                 </div>
-                
-                <a href="/logout" onclick="konfirmasiLogout(event)" class="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium text-sm my-auto group">
-                    Logout <i class="fa-solid fa-right-from-bracket group-hover:translate-x-1 transition-transform"></i>
-                </a>
+                <div class="flex items-center gap-4">
+                    <span class="hidden md:block text-sm text-slate-500">Halo, <span class="font-semibold text-slate-700">{{ user.name }}</span></span>
+                    <a href="/logout" onclick="konfirmasiLogout(event)" class="text-slate-400 hover:text-red-600 transition duration-200">
+                        <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 mb-10 space-y-10">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
-        <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+        <!-- HEADER & FILTER -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <div>
-                <h2 class="text-2xl font-bold text-slate-800">Laporan Absensi</h2>
-                <p class="text-slate-500 text-sm">Periode Data: <span class="font-bold text-indigo-600">{{ selected_month }}</span></p>
+                <h1 class="text-2xl font-bold text-slate-800">Laporan Absensi</h1>
+                <p class="text-slate-500 text-sm mt-1">Rekapitulasi kehadiran karyawan.</p>
             </div>
             
-            <div class="flex gap-4 items-center">
-                <form action="/manajer" method="POST" class="flex gap-2 bg-white p-1.5 rounded-lg shadow-sm border border-slate-200">
-                    <input type="month" name="bulan" value="{{ selected_month }}" 
-                        class="border-none outline-none text-slate-700 font-bold bg-transparent cursor-pointer text-sm">
-                    <button type="submit" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs hover:bg-indigo-700 transition">
-                        <i class="fa-solid fa-filter"></i>
-                    </button>
-                </form>
-
+            <form method="POST" action="/manajer" class="flex flex-col sm:flex-row gap-3">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-regular fa-calendar text-slate-400"></i>
+                    </div>
+                    <input type="month" name="bulan" value="{{ selected_month }}" onchange="this.form.submit()" 
+                        class="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm transition">
+                </div>
                 <div class="flex gap-2">
-                    <a href="/download_report/excel/{{ selected_month }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center gap-2">
-                        <i class="fa-solid fa-file-excel"></i> <span class="hidden md:inline">Excel</span>
+                    <a href="{{ url_for('download_report', type='excel', month=selected_month) }}" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-emerald-700 bg-emerald-100 hover:bg-emerald-200 transition">
+                        <i class="fa-solid fa-file-excel mr-2"></i> Excel
                     </a>
-                    <a href="/download_report/pdf/{{ selected_month }}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center gap-2">
-                        <i class="fa-solid fa-file-pdf"></i> <span class="hidden md:inline">PDF</span>
+                    <a href="{{ url_for('download_report', type='pdf', month=selected_month) }}" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-red-700 bg-red-100 hover:bg-red-200 transition">
+                        <i class="fa-solid fa-file-pdf mr-2"></i> PDF
                     </a>
                 </div>
-            </div>
+            </form>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 bg-blue-50/50">
-                <h3 class="font-bold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-trophy text-yellow-500"></i> Rekapitulasi Kinerja
-                </h3>
+        <!-- SECTION 1: REKAP BULANAN -->
+        <div>
+            <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-users-viewfinder text-indigo-500"></i> Ringkasan Karyawan
+            </h2>
+            
+            <!-- TAMPILAN MOBILE (CARDS) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:hidden">
+                {% for row in rekap_data %}
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">{{ row.name }}</h3>
+                            <p class="text-xs text-slate-400">Karyawan</p>
+                        </div>
+                        <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                            {{ row.total_hadir }} Hari
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                        <i class="fa-regular fa-clock text-slate-400"></i>
+                        <span>Rata-rata Masuk: 
+                            <span class="font-semibold text-slate-800">{{ row.rata_rata_jam_masuk + ' WIB' if row.rata_rata_jam_masuk else '-' }}</span>
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                            <th class="p-4 border-b">Nama Karyawan</th>
-                            <th class="p-4 border-b text-center">Total Hadir</th>
-                            <th class="p-4 border-b text-center">Rata-rata Masuk</th>
-                            <th class="p-4 border-b text-center">Predikat</th>
+
+            <!-- TAMPILAN DESKTOP (TABLE) -->
+            <div class="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nama Karyawan</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Total Hadir</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rata-rata Jam Masuk</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Performa</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm text-slate-700 divide-y divide-slate-100">
+                    <tbody class="bg-white divide-y divide-slate-200">
                         {% for row in rekap_data %}
                         <tr class="hover:bg-slate-50 transition">
-                            <td class="p-4 font-semibold text-slate-800">{{ row['name'] }}</td>
-                            <td class="p-4 text-center">
-                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold text-xs">{{ row['total_hadir'] }} Hari</span>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs mr-3">
+                                        {{ row.name[:2].upper() }}
+                                    </div>
+                                    <div class="text-sm font-medium text-slate-900">{{ row.name }}</div>
+                                </div>
                             </td>
-                            <td class="p-4 text-center font-mono text-slate-500">{{ row['rata_rata_jam_masuk'] }}</td>
-                            <td class="p-4 text-center">
-                                {% if row['total_hadir'] >= 20 %} <span class="text-emerald-600 font-bold text-xs">Sangat Rajin</span>
-                                {% else %} <span class="text-orange-500 font-bold text-xs">Perlu Ditingkatkan</span> {% endif %}
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    {{ row.total_hadir }} Hari
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {{ row.rata_rata_jam_masuk + ' WIB' if row.rata_rata_jam_masuk else '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                             </td>
                         </tr>
-                        {% else %}
-                        <tr><td colspan="4" class="p-4 text-center text-slate-400 text-xs">Belum ada data rekap.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 bg-emerald-50/50">
-                <h3 class="font-bold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Riwayat Absensi Harian
-                </h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                            <th class="p-4 border-b">Tanggal</th>
-                            <th class="p-4 border-b">Nama Karyawan</th>
-                            <th class="p-4 border-b text-center">Face IN (Datang)</th>
-                            <th class="p-4 border-b text-center">Face OUT (Pulang)</th>
-                            <th class="p-4 border-b text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm text-slate-700 divide-y divide-slate-100">
-                        {% for row in daily_data %}
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="p-4 font-mono text-slate-500">{{ row['date_str'] }}</td>
-                            <td class="p-4 font-semibold text-slate-800">{{ row['name'] }}</td>
-                            
-                            <td class="p-4 text-center">
-                                <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-md font-mono text-xs font-bold">
-                                    {{ row['face_in'] }}
-                                </span>
-                            </td>
-                            
-                            <td class="p-4 text-center">
-                                {% if row['face_in'] == row['face_out'] %}
-                                    <span class="text-slate-400 italic text-xs animate-pulse font-medium text-red-500">
-                                        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Belum Absen Pulang
-                                    </span>
-                                {% else %}
-                                    <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-md font-mono text-xs font-bold">
-                                        {{ row['face_out'] }}
-                                    </span>
-                                {% endif %}
-                            </td>
-
-                            <td class="p-4 text-center">
-                                {% if row['face_in'] == row['face_out'] %}
-                                    <span class="text-orange-500 font-bold text-xs bg-orange-50 px-2 py-1 rounded border border-orange-100">
-                                        <i class="fa-solid fa-hourglass-half"></i> Menunggu
-                                    </span>
-                                {% else %}
-                                    <span class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
-                                        <i class="fa-solid fa-check-double"></i> Valid (1 Hari)
-                                    </span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="5" class="p-8 text-center text-slate-400">
-                                <i class="fa-regular fa-folder-open text-3xl mb-2"></i>
-                                <p>Tidak ada riwayat absensi pada periode ini.</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- SECTION 2: DETAIL HARIAN -->
+        <div>
+            <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-indigo-500"></i> Detail Harian
+            </h2>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <!-- WRAPPER SCROLL HORIZONTAL UNTUK MOBILE -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Tanggal</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Nama</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Jam Masuk</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Jam Pulang</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Bukti</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            {% for row in daily_data %}
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                    {{ row.date_str }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                    {{ row.name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 font-medium">
+                                    <i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> {{ row.face_in }} WIB
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
+                                    {% if row.face_out != row.face_in %}
+                                        <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> {{ row.face_out }} WIB
+                                    {% else %}
+                                        <span class="text-slate-400 italic">Belum Pulang</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if row.face_out != row.face_in %}
+                                        <span class="px-2 py-1 text-xs font-semibold rounded bg-blue-50 text-blue-600 border border-blue-100">Lengkap</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 text-xs font-semibold rounded bg-yellow-50 text-yellow-600 border border-yellow-100">Sedang Kerja</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <div class="flex gap-2">
+                                        {% if row.proof_in %}
+                                        <button onclick="lihatBukti('{{ url_for('static', filename=row.proof_in) }}', 'Bukti Masuk - {{ row.name }}')" class="text-indigo-600 hover:text-indigo-900" title="Foto Masuk"><i class="fa-solid fa-camera"></i> In</button>
+                                        {% endif %}
+                                        {% if row.proof_out and row.proof_out != row.proof_in %}
+                                        <button onclick="lihatBukti('{{ url_for('static', filename=row.proof_out) }}', 'Bukti Pulang - {{ row.name }}')" class="text-orange-600 hover:text-orange-900" title="Foto Pulang"><i class="fa-solid fa-camera"></i> Out</button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
     </main>
 
-    <footer class="text-center py-6 text-slate-400 text-xs border-t border-slate-200 mt-auto">
-        &copy; 2025 Tiaria Jewelry IT Division.
-    </footer>
-
-    <div id="flash-data" data-messages='{{ get_flashed_messages(with_categories=true) | tojson }}' style="display: none;"></div>
-    
     <script>
-        // 1. Config Toast
-        const Toast = Swal.mixin({
-            toast: true, position: 'top-end', showConfirmButton: false,
-            timer: 3000, timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-        })
-
-        // 2. Parse Flash Messages
-        var flashElement = document.getElementById('flash-data');
-        var rawData = flashElement.getAttribute('data-messages');
-        try {
-            var flashMessages = JSON.parse(rawData);
-            if (Array.isArray(flashMessages) && flashMessages.length > 0) {
-                flashMessages.forEach(function(item) {
-                    var category = item[0];
-                    var message = item[1];
-                    var iconType = (category === 'error') ? 'error' : 'success';
-                    Toast.fire({ icon: iconType, title: message });
-                });
-            }
-        } catch (e) {}
-
-        // 3. Konfirmasi Logout
         function konfirmasiLogout(event) {
             event.preventDefault();
             Swal.fire({
-                title: 'Keluar dari Dashboard?',
+                title: 'Yakin mau Logout?',
+                text: "Anda akan keluar dari sesi manajer.",
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#2563eb',
+                confirmButtonColor: '#4f46e5',
                 cancelButtonColor: '#64748b',
                 confirmButtonText: 'Ya, Keluar',
                 cancelButtonText: 'Batal'
@@ -222,7 +215,16 @@
                 }
             })
         }
-    </script>
 
+        function lihatBukti(url, title) {
+            Swal.fire({
+                title: title,
+                imageUrl: url,
+                imageAlt: 'Bukti Absensi',
+                imageHeight: 400,
+                confirmButtonText: 'Tutup'
+            })
+        }
+    </script>
 </body>
 </html>

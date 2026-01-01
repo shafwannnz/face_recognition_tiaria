@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, request, redirect, url_for, flash, send_file, session # <-- Tambah session
+from flask import Flask, render_template, Response, request, redirect, url_for, flash, send_file, session, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 import cv2
@@ -6,6 +6,7 @@ import face_recognition
 import pickle
 import numpy as np
 import os
+import base64
 import pandas as pd
 from datetime import datetime, timedelta # <-- Tambah timedelta
 from io import BytesIO
@@ -19,6 +20,25 @@ app.secret_key = "rahasia_super_aman"
 # --- UPDATE KEAMANAN: AUTO LOGOUT 1 MENIT ---
 # Kalau user tidak ngapa-ngapain selama 1 menit, sesi hangus.
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)
+
+# --- UPDATE DATABASE: CEK KOLOM BUKTI FOTO ---
+def check_and_update_db():
+    conn = create_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(attendance)")
+            columns = [info[1] for info in cursor.fetchall()]
+            if 'image_path' not in columns:
+                cursor.execute("ALTER TABLE attendance ADD COLUMN image_path TEXT")
+                conn.commit()
+                print("✅ DB Updated: Kolom 'image_path' berhasil ditambahkan.")
+        except Exception as e:
+            print(f"⚠️ DB Check Error: {e}")
+        finally:
+            conn.close()
+
+check_and_update_db()
 
 # --- SETUP FLASK LOGIN ---
 login_manager = LoginManager()
@@ -44,14 +64,32 @@ except:
 # camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1080) # Ubah ke 1:1 ya ges ya
 # camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
-def mark_attendance(name, user_login):
-    """ Mencatat absensi & Nulis ke file log.txt biar kebaca """
+def mark_attendance(name, user_login, frame=None):
+    """ 
+    Mencatat absensi.
+    Returns: (bool, str) -> (Sukses?, Pesan)
+    """
     
     # Buka file log.txt (Mode Append)
     with open("log.txt", "a") as f:
         f.write(f"\n[{datetime.now()}] SCAN DETECTED: {name}\n")
     
     conn = create_connection()
+    msg = "Terjadi kesalahan sistem."
+    success = False
+    image_db_path = None
+
+    # --- SIMPAN BUKTI FOTO ---
+    if frame is not None:
+        save_dir = "static/uploads/evidence"
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        
+        filename = f"{datetime.now().strftime('%Y%m%d')}_{name}_{datetime.now().strftime('%H%M%S')}.jpg"
+        filepath = os.path.join(save_dir, filename)
+        cv2.imwrite(filepath, frame)
+        image_db_path = f"uploads/evidence/{filename}"
+
     if conn is not None:
         cursor = conn.cursor()
         now = datetime.now()
@@ -72,27 +110,49 @@ def mark_attendance(name, user_login):
                 
                 should_record = False
                 if not last_attendance:
+                    # --- ABSEN MASUK ---
                     should_record = True
+                    msg = f"Selamat Pagi, {name}! Absen Masuk Berhasil."
                     with open("log.txt", "a") as f: f.write(f"   -> Status: Absen PERTAMA hari ini. REKAM!\n")
                 else:
+                    # --- ABSEN PULANG ---
                     last_time = datetime.strptime(last_attendance[0], "%H:%M:%S")
                     current_time = datetime.strptime(time_str, "%H:%M:%S")
                     diff = (current_time - last_time).total_seconds()
                     
                     if diff > 120:
-                        should_record = True
-                        with open("log.txt", "a") as f: f.write(f"   -> Status: Absen PULANG (Face Out). Selisih {diff}s\n")
+                        # LOGIKA BARU: Cek apakah sudah jam 15:00?
+                        if now.hour >= 15:
+                            should_record = True
+                            msg = f"Hati-hati di jalan, {name}! Absen Pulang Berhasil."
+                            with open("log.txt", "a") as f: f.write(f"   -> Status: Absen PULANG (Face Out). Selisih {diff}s\n")
+                        else:
+                            # DITOLAK KARENA BELUM JAM 15:00
+                            msg = "Belum waktunya pulang! (Minimal Jam 15:00 WIB)"
+                            with open("log.txt", "a") as f: f.write(f"   -> DITOLAK: Belum jam 15:00. Sekarang jam {now.hour}\n")
+                            conn.close()
+                            return False, msg
                     else:
+                        msg = "Anda baru saja absen! Tunggu 2 menit."
                         with open("log.txt", "a") as f: f.write(f"   -> SPAM: Ditolak, baru {diff}s lalu.\n")
+                        conn.close()
+                        return False, msg
 
                 if should_record:
-                    cursor.execute("INSERT INTO attendance (user_id, date_str, time_str) VALUES (?, ?, ?)", (user_id, date_str, time_str))
+                    if image_db_path:
+                        cursor.execute("INSERT INTO attendance (user_id, date_str, time_str, image_path) VALUES (?, ?, ?, ?)", (user_id, date_str, time_str, image_db_path))
+                    else:
+                        cursor.execute("INSERT INTO attendance (user_id, date_str, time_str) VALUES (?, ?, ?)", (user_id, date_str, time_str))
                     conn.commit()
-                    print(f"✅ DATA MASUK: {name}") # Tetap print ke terminal
+                    print(f"✅ DATA MASUK: {name}") 
+                    success = True
             else:
+                msg = "Wajah tidak cocok dengan akun login!"
                 with open("log.txt", "a") as f: f.write(f"   -> ERROR: Wajah ({name}) != Akun ({user_login.name})\n")
         
         conn.close()
+    
+    return success, msg
 
 def generate_frames(active_user):
     print("📸 Mencoba menyalakan kamera...")
@@ -144,9 +204,14 @@ def generate_frames(active_user):
                                 
                                 if active_user and active_user.is_authenticated:
                                     if active_user.name == name:
-                                        mark_attendance(name, active_user)
-                                        debug_status = f"SUKSES: Data {name} Masuk!"
-                                        debug_color = (0, 255, 0)
+                                        # Update pemanggilan mark_attendance
+                                        success, msg = mark_attendance(name, active_user, frame)
+                                        if success:
+                                            debug_status = f"SUKSES: {msg}"
+                                            debug_color = (0, 255, 0)
+                                        else:
+                                            debug_status = f"INFO: {msg}"
+                                            debug_color = (0, 165, 255) # Orange
                                     else:
                                         debug_status = f"GAGAL: Login '{active_user.name}' != Wajah '{name}'"
                                         debug_color = (0, 0, 255)
@@ -228,6 +293,50 @@ def video_feed():
     # Fix ambil objek user Asli biar ga ilang di tengah jalan
     real_user = current_user._get_current_object()
     return Response(generate_frames(real_user), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# --- API BARU: PROSES FRAME DARI CLIENT (HP) ---
+@app.route('/process_frame', methods=['POST'])
+@login_required
+def process_frame():
+    """Menerima gambar base64 dari browser (HP), cek wajah, return JSON"""
+    try:
+        data = request.get_json()
+        image_data = data['image']
+        
+        # Decode Base64 ke Image OpenCV
+        header, encoded = image_data.split(",", 1)
+        nparr = np.frombuffer(base64.b64decode(encoded), np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        # Proses Wajah (Sama logicnya dengan generate_frames)
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        face_locations = face_recognition.face_locations(rgb_frame)
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+        
+        detected_name = "Unknown"
+        match_found = False
+        
+        for face_encoding in face_encodings:
+            matches = face_recognition.compare_faces(known_encodings, face_encoding)
+            face_distances = face_recognition.face_distance(known_encodings, face_encoding)
+            
+            if len(face_distances) > 0:
+                best_match_index = np.argmin(face_distances)
+                if matches[best_match_index]:
+                    detected_name = known_names[best_match_index]
+                    if current_user.name == detected_name:
+                        # Update pemanggilan mark_attendance
+                        success, msg = mark_attendance(detected_name, current_user, frame)
+                        if success:
+                            return jsonify({'status': 'success', 'message': msg, 'match': True})
+                        else:
+                            # Wajah cocok, tapi ditolak logika (misal belum jam 15:00)
+                            return jsonify({'status': 'warning', 'message': msg, 'match': True})
+        
+        return jsonify({'status': 'scanning', 'message': 'Mencari wajah...', 'match': False})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
 
 # --- HALAMAN ADMIN ---
 @app.route('/admin')
@@ -419,22 +528,29 @@ def manajer_dashboard():
     
     df_rekap = pd.read_sql_query(query_rekap, conn)
     df_rekap['total_hadir'] = df_rekap['total_hadir'].fillna(0).astype(int)
+    # FIX: Konversi NaN ke None agar tidak error di Jinja template saat operasi string
+    df_rekap = df_rekap.where(pd.notnull(df_rekap), None)
     rekap_data = df_rekap.to_dict(orient='records')
     
     # --- QUERY 2: DETAIL HARIAN (KHUSUS KARYAWAN) ---
     query_daily = f"""
     SELECT 
         u.name, 
+        u.id,
         a.date_str,
         MIN(a.time_str) as face_in,
-        MAX(a.time_str) as face_out
+        MAX(a.time_str) as face_out,
+        (SELECT image_path FROM attendance a2 WHERE a2.user_id = u.id AND a2.date_str = a.date_str ORDER BY time_str ASC LIMIT 1) as proof_in,
+        (SELECT image_path FROM attendance a2 WHERE a2.user_id = u.id AND a2.date_str = a.date_str ORDER BY time_str DESC LIMIT 1) as proof_out
     FROM attendance a
     JOIN users u ON a.user_id = u.id
     WHERE u.role = 'karyawan' AND a.date_str LIKE '{filter_month}%' -- <--- FILTER DI SINI JUGA
-    GROUP BY u.name, a.date_str
-    ORDER BY a.date_str DESC, a.time_str ASC
+    GROUP BY u.name, u.id, a.date_str
+    ORDER BY a.date_str DESC, MIN(a.time_str) ASC
     """
     df_daily = pd.read_sql_query(query_daily, conn)
+    # FIX: Konversi NaN ke None agar aman
+    df_daily = df_daily.where(pd.notnull(df_daily), None)
     daily_data = df_daily.to_dict(orient='records')
     
     conn.close()
@@ -445,44 +561,5 @@ def manajer_dashboard():
                            daily_data=daily_data,   
                            selected_month=filter_month)
 
-    filename = f"Laporan_Absensi_{month}"
-
-    if type == 'excel':
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Rekap Bulanan')
-        output.seek(0)
-        return send_file(output, download_name=f'{filename}.xlsx', as_attachment=True)
-
-    elif type == 'pdf':
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", style="B", size=16)
-        pdf.cell(200, 10, txt=f"Laporan Bulanan Tiaria Jewelry", ln=True, align='C')
-        pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, txt=f"Periode: {month}", ln=True, align='C')
-        pdf.ln(10)
-
-        # Header Tabel
-        pdf.set_font("Arial", style="B", size=10)
-        pdf.cell(50, 10, "Nama", 1)
-        pdf.cell(40, 10, "Tanggal", 1)
-        pdf.cell(40, 10, "Jam", 1)
-        pdf.cell(40, 10, "Jabatan", 1)
-        pdf.ln()
-
-        # Isi Tabel
-        pdf.set_font("Arial", size=10)
-        for i, row in df.iterrows():
-            pdf.cell(50, 10, str(row['Nama']), 1)
-            pdf.cell(40, 10, str(row['Tanggal']), 1)
-            pdf.cell(40, 10, str(row['Jam_Scan']), 1)
-            pdf.cell(40, 10, str(row['Jabatan']), 1)
-            pdf.ln()
-
-        pdf_output = BytesIO()
-        pdf_output.write(pdf.output(dest='S').encode('latin-1'))
-        pdf_output.seek(0)
-        return send_file(pdf_output, download_name=f'{filename}.pdf', as_attachment=True, mimetype='application/pdf')
 if __name__ == '__main__':
     app.run(debug=True)

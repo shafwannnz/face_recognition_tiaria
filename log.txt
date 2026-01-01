@@ -181,3 +181,186 @@
 
 [2025-12-21 18:16:00.462091] SCAN DETECTED: Zaky
    -> SPAM: Ditolak, baru 2.0s lalu.
+
+[2025-12-25 19:29:57.389477] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-25 19:29:58.992170] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 1.0s lalu.
+
+[2025-12-25 19:31:50.586330] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 113.0s lalu.
+
+[2025-12-25 19:31:52.202585] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 115.0s lalu.
+
+[2025-12-25 20:31:34.632857] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 3697.0s
+
+[2025-12-25 20:31:36.227291] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 2.0s lalu.
+
+[2025-12-25 20:31:37.843161] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 3.0s lalu.
+
+[2025-12-26 00:27:06.710250] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-26 00:27:07.734499] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 1.0s lalu.
+
+[2025-12-26 00:27:14.833683] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 8.0s lalu.
+
+[2025-12-26 00:27:15.854032] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 9.0s lalu.
+
+[2025-12-26 00:34:44.205739] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 0
+
+[2025-12-26 00:34:52.454997] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 0
+
+[2025-12-26 00:34:56.437693] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 0
+
+[2025-12-26 00:35:01.592979] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 0
+
+[2025-12-26 10:54:29.485376] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-26 11:06:23.263536] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:10:49.962299] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:11:00.063466] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:11:00.499484] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:11:10.046878] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:11:25.019607] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:11:36.683602] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:11:43.356471] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:11:48.352397] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:38:22.739724] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-26 11:38:29.074069] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-27 10:32:16.416005] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-27 10:32:24.796388] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 8.0s lalu.
+
+[2025-12-27 10:43:48.513734] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 10
+
+[2025-12-27 10:43:49.484214] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 10
+
+[2025-12-27 10:43:54.649425] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 10
+
+[2025-12-27 10:43:56.398933] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 10
+
+[2025-12-27 11:12:27.635377] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 11
+
+[2025-12-28 13:02:26.779097] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-28 13:02:28.014245] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 2.0s lalu.
+
+[2025-12-28 13:12:01.701267] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 13
+
+[2025-12-28 13:12:02.817766] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 13
+
+[2025-12-28 14:32:51.498364] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 14
+
+[2025-12-28 14:32:52.702214] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 14
+
+[2025-12-28 14:32:57.863805] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 14
+
+[2025-12-28 14:32:58.922000] SCAN DETECTED: Zaky
+   -> DITOLAK: Belum jam 15:00. Sekarang jam 14
+
+[2025-12-28 21:58:34.852681] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 32168.0s
+
+[2025-12-29 21:09:02.743632] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-29 21:09:03.874540] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 1.0s lalu.
+
+[2025-12-29 21:50:00.058404] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 2458.0s
+
+[2025-12-29 21:50:01.145142] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 1.0s lalu.
+
+[2025-12-29 22:18:04.994854] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 1685.0s
+
+[2025-12-29 22:18:06.075435] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 1.0s lalu.
+
+[2025-12-29 22:18:11.891568] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 6.0s lalu.
+
+[2025-12-29 22:18:12.906828] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 7.0s lalu.
+
+[2025-12-31 17:09:24.681753] SCAN DETECTED: Zaky
+   -> Status: Absen PERTAMA hari ini. REKAM!
+
+[2025-12-31 17:09:33.533364] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 9.0s lalu.
+
+[2025-12-31 17:09:38.881833] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 14.0s lalu.
+
+[2025-12-31 17:09:56.344651] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 32.0s lalu.
+
+[2025-12-31 17:10:06.802133] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 42.0s lalu.
+
+[2025-12-31 17:10:12.151122] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 48.0s lalu.
+
+[2025-12-31 17:10:23.222222] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 59.0s lalu.
+
+[2025-12-31 17:46:00.551438] SCAN DETECTED: Zaky
+   -> Status: Absen PULANG (Face Out). Selisih 2196.0s
+
+[2025-12-31 17:46:09.533236] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 9.0s lalu.
+
+[2025-12-31 17:46:14.786226] SCAN DETECTED: Zaky
+   -> SPAM: Ditolak, baru 14.0s lalu.
